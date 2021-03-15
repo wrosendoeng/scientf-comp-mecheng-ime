@@ -2,7 +2,8 @@ PROGRAM machine_accuracy
   IMPLICIT NONE
 
   !INTEGER :: ref_value, acc_obt !EQUALS TO ZERO
-  REAL(8) :: ref_value, acc_obt !SHOWS A RESIDUAL VALUE
+  REAL(4) :: ref_value, acc_obt !SHOWS A RESIDUAL VALUE 
+  !REAL(8) :: ref_value, acc_obt !SHOWS A RESIDUAL VALUE
   !COMPLEX :: ref_value, acc_obt ### SHOWS A RESIDUAL VALUE
   !LOGICAL :: ref_value, acc_obt ### GIVES AN ERROR
   !CHARACTER :: ref_value, acc_obt ### GIVES AN ERROR
@@ -31,3 +32,4 @@ END PROGRAM machine_accuracy
 !____imprima na tela 2*precisão_obtida
 
 !FIM
+!
