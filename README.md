@@ -4,6 +4,8 @@ Primeira cadeira do curso de Mestrado em Engenharia Mecânica pelo IME
 
 Profº Mj. Arantes - PGMEC
 
+Bibliografia: M. A. Gomes Ruggiero, V. L. da Rocha Lopes. Cálculo Numérico - Aspectos Teóricos e Computacionais, 2ª edição, Editora Pearson, 1997
+
 1. Estudo de erro de funções com zeros reais conhecidos
 	1. Método da bisseção
 	2. Método da posição falsa
