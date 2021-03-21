@@ -31,15 +31,10 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
-		<Unit filename="functions.f90">
-			<Option weight="0" />
-		</Unit>
 		<Unit filename="main.f90">
 			<Option weight="0" />
 		</Unit>
-		<Unit filename="methods.f90">
-			<Option weight="0" />
-		</Unit>
+		<Unit filename="numerical_methods.f90" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
 		</Extensions>

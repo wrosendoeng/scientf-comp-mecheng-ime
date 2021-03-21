@@ -1,4 +1,4 @@
-MODULE methods
+MODULE numerical_methods
 
 CONTAINS
 

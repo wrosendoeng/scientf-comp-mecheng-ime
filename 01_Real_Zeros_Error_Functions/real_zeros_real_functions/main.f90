@@ -1,7 +1,7 @@
 PROGRAM main
 
     !Declaring precompiled module named "numerical methods"
-    use numerical_methods, ONLY: bissec
+    use numerical_methods
 
     !Deactivate implicit variables
     IMPLICIT NONE
@@ -10,9 +10,8 @@ PROGRAM main
 
     !Declaring interfaces with subroutines
     INTERFACE
-        SUBROUTINE polynomial(x,f)
+        SUBROUTINE polynomial
             REAL(8),INTENT(IN) :: x
-            REAL(8),INTENT(OUT) :: f
         END SUBROUTINE polynomial
     END INTERFACE
 
@@ -23,11 +22,10 @@ PROGRAM main
 
 END PROGRAM
 
-subroutine polynomial(x,f)
+REAL function polynomial(x)
     IMPLICIT NONE
     REAL,INTENT(IN) :: x
-    REAL,INTENT(OUT) :: f
 
     !Create real polynomial function with known-zeros
     f = x**(3.) - 9*x + 3
-END subroutine polynomial
+END function polynomial

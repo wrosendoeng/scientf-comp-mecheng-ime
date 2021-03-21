@@ -1,8 +1,8 @@
-MODULE methods
+MODULE numerical_methods
 
 CONTAINS
 
-    REAL FUNCTION bissec(func(x,f),[k1,k2])
+    REAL FUNCTION bissec()
         IMPLICIT NONE
         REAL(8) :: k1,k2,eps,x_avg
         INTEGER :: i, imax
@@ -11,13 +11,13 @@ CONTAINS
         imax = 100
 
         DO WHILE (i .LE. imax) ! 100 iterations to prevent infinite loop
-            IF ((k1-k2)/2 .LT. eps .OR. polynomial(x_avg,f) .LT. eps) THEN
+            IF ((k1-k2)/2 .LT. eps .OR. polynomial(x_avg) .LT. eps) THEN
                 x_avg = (k2-k1)/2
                 stop
             ELSE
                 x_avg = (k2-k1)/2
-                M = polynomial(k1,f)
-                N = polynomial(x_avg,f)
+                M = polynomial(k1)
+                N = polynomial(x_avg)
                 IF (M*N .GT. 0) THEN
                     x_avg = k1
                 ELSE
