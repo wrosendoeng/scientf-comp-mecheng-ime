@@ -13,6 +13,7 @@ CONTAINS
         DO WHILE (i .LE. imax) ! 100 iterations to prevent infinite loop
             IF ((k1-k2)/2 .LT. eps .OR. polynomial(x_avg,f) .LT. eps) THEN
                 x_avg = (k2-k1)/2
+                PRINT(1,*) "The value of real root is ", x_avg
                 stop
             ELSE
                 x_avg = (k2-k1)/2
@@ -20,8 +21,10 @@ CONTAINS
                 N = polynomial(x_avg,f)
                 IF (M*N .GT. 0) THEN
                     x_avg = k1
+                    PRINT(1,*) "The value of k1 is: ", x_avg
                 ELSE
                     x_avg = k2
+                    PRINT(1,*) "The value of k2 is: ", x_avg
                 END IF
             END IF
             i = i+1
