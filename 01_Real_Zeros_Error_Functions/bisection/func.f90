@@ -5,6 +5,7 @@ MODULE func
       REAL(8),INTENT(IN) :: x
 
       !Create real polynomial function with known-zeros
-      f = x**(3.) - 9*x + 3
+      f = 4.0*cos(x) - exp(x)
+      !f = x.**(3) - 9*x + 3
     END function f
 END MODULE func

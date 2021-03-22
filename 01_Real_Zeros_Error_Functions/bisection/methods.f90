@@ -12,8 +12,8 @@ CONTAINS
     DO WHILE (i .LE. imax) ! 100 iterations to prevent infinite loop
         x_avg = (b+a)/2
         IF ((b-a) .LT. eps) THEN
-            PRINT *, "The value of x_avg: ",x_avg
-            PRINT *, "The value of f(x_avg): ",f(x_avg)          
+            PRINT '(A32,E25.17)', "The value of x_avg: ", x_avg
+            PRINT '(A32,E25.17)', "The value of f(x_avg): ", f(x_avg)
             PRINT *, "How many iterations were used: ", i
             stop
         ELSE
