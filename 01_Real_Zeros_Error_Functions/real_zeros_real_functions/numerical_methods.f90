@@ -2,10 +2,9 @@ MODULE numerical_methods
 
 CONTAINS
 
-    REAL FUNCTION bissec(f,[k1,k2])
+    FUNCTION bissec(f,k1,k2)
         IMPLICIT NONE
-        REAL(8) :: eps,x_avg,f,M,N
-        REAL(8), DIMENSION(2) :: [k1,k2]
+        REAL(8) :: eps,x_avg,f,M,N,k1,k2,bissec
         INTEGER :: i, imax
 
         eps = 1.e-3
