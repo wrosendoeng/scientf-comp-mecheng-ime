@@ -1,56 +1,56 @@
 MODULE numerical_methods
 IMPLICIT NONE
-real(8) :: eps1 = 1.e-3, eps2 = 1.e-3
-integer :: i = 1, imax = 100
+REAL(8) :: eps1 = 1.e-4, eps2 = 1.e-4
+INTEGER :: i = 1, imax = 100
 
 CONTAINS
-    FUNCTION bissec(f,a,b)
+    FUNCTION bissec(f,x0,x1)
         IMPLICIT NONE
-        REAL(8) :: x,f,Y1,Y2,a,b,bissec
+        REAL(8) :: x,x0,x1,f,y0,y1,bissec
 
         DO WHILE (i .LE. imax) ! 100 iterations to prevent infinite loop
-            x = (b+a)/2
-            IF ((b-a) .LT. eps1) THEN
+            x = (x1+x0)/2
+            IF ((x1-x0) .LT. eps1) THEN
                 PRINT '(A32,E25.17)', "The value of x: ", x
                 PRINT '(A32,E25.17)', "The value of f(x): ", f(x)
                 PRINT *, "How many iterations were used in bisection method: ", i
                 stop
             ELSE
-                Y1 = f(a)
-                Y2 = f(x)
-                IF (Y1*Y2 .GT. 0) THEN
-                    a = x
+                y0 = f(x0)
+                y1 = f(x)
+                IF (y0*y1 .GT. 0) THEN
+                    x0 = x
                 ELSE
-                    b = x
+                    x1 = x
                 END IF
             END IF
             i = i+1
         END DO
     END FUNCTION
 
-    FUNCTION falsepos(f,a,b)
+    FUNCTION falsepos(f,x0,x1)
         IMPLICIT NONE
-        REAL(8) :: x,f,Y1,Y2,a,b,falsepos
+        REAL(8) :: x,x0,x1,f,y0,y1,falsepos
 
         DO WHILE (i .LE. imax) ! 100 iterations to prevent infinite loop
-            x = (a*f(b)+b*f(a))/(f(b)-f(a))
-            IF ((b-a) .LT. eps1 .OR. ABS(f(a)) < eps2 .OR. ABS(f(b)) < eps2) THEN
+            x = (x0*f(x1)+x1*f(x0))/(f(x1)-f(x0))
+            IF ((x1-x0) .LT. eps1 .OR. ABS(f(x0)) < eps2 .OR. ABS(f(x1)) < eps2) THEN
                 PRINT '(A32,E25.17)', "The value of x: ", x
                 PRINT '(A32,E25.17)', "The value of f(x): ", f(x)
                 PRINT *, "How many iterations were used in false position method: ", i
                 STOP
             ELSE
-                Y1 = f(a)
-                Y2 = f(x)
-                IF (ABS(Y2) .LT. eps2) THEN
+                y0 = f(x0)
+                y1 = f(x)
+                IF (ABS(y1) .LT. eps2) THEN
                     PRINT '(A32,E25.17)', "The value of x: ", x
-                    PRINT '(A32,E25.17)', "The value of f(x): ", f(x)
+                    PRINT '(A32,E25.17)', "The value of f(x): ", y1
                     PRINT *, "How many iterations were used in false position method: ", i
                     STOP  
-                ELSE IF (Y1*Y2 .GT. 0) THEN
-                    a = x
+                ELSE IF (y0*y1 .GT. 0) THEN
+                    x0 = x
                 ELSE
-                    b = x
+                    x1 = x
                 END IF
             END IF
             i = i+1
@@ -58,25 +58,25 @@ CONTAINS
 
     END FUNCTION
 
-    FUNCTION newton_raphson(f,a,b)
-        USE numerical_differentiation
+    FUNCTION newton_raphson(f,nf,x0,x1)
         IMPLICIT NONE 
-        REAL(8) :: f,a,b,newton_forward
+        REAL(8) :: f, nf, x0, x1, newton_raphson
 
         DO WHILE (i .LE. imax) ! 100 iterations to prevent infinite loop
-            IF (ABS(f(a)) .LT. eps1) THEN
-                PRINT '(A32,E25.17)', "The value of x: ", a
-                PRINT '(A32,E25.17)', "The value of f(x): ", f(a)
+            IF (ABS(f(x0)) .LT. eps1) THEN
+                PRINT '(A32,E25.17)', "The value of x: ", x0
+                PRINT '(A32,E25.17)', "The value of f(x): ", f(x0)
                 PRINT *, "How many iterations were used in Netwon-Raphson method: ", i
                 STOP
             ELSE
-                b = a - f(a)/newton_forward(f,a)
-                IF (f(b) .LT. eps1 .OR. ABS(b-a) .LT. eps2) THEN
-                    PRINT '(A32,E25.17)', "The value of x: ", b
-                    PRINT '(A32,E25.17)', "The value of f(x): ", f(b)
+                x1 = x0 - f(x0)/nf(f,x0)
+                IF (ABS(f(x1)) .LT. eps1 .OR. ABS(x1-x0) .LT. eps2) THEN
+                    PRINT '(A32,E25.17)', "The value of x: ", x1
+                    PRINT '(A32,E25.17)', "The value of f(x): ", f(x1)
                     PRINT *, "How many iterations were used in Netwon-Raphson method: ", i
+                    STOP
                 ELSE
-                    a = b
+                    x0 = x1
                 END IF 
             END IF
             i = i+1

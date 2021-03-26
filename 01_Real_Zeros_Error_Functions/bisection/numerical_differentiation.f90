@@ -1,10 +1,8 @@
 MODULE numerical_differentiation
-CONTAINS
-    REAL(8) function newton_forward(f,x) ! Newton-forward formula of differentiation
-        REAL(8) :: dx
-        REAL(8),INTENT(IN) :: x, f
-        dx = 1.e-1
+    CONTAINS
+    REAL(8) FUNCTION nf(f,x) ! Newton-forward formula of differentiation
+        REAL(8) :: dx = 1.e-4, f, x
         !Create numerical method
-        newton_forward = (f(x+dx) - f(x))/dx
-    END function newton_forward
+        nf = (f(x+dx) - f(x))/dx
+    END FUNCTION 
 END MODULE
