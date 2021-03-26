@@ -10,7 +10,7 @@ CONTAINS
 
     DO WHILE (i .LE. imax) ! 100 iterations to prevent infinite loop
         x = (b+a)/2
-        IF ((b-a) .LT. eps) THEN
+        IF ((b-a) .LT. eps1) THEN
             PRINT '(A32,E25.17)', "The value of x: ", x
             PRINT '(A32,E25.17)', "The value of f(x): ", f(x)
             PRINT *, "How many iterations were used in bisection method: ", i
