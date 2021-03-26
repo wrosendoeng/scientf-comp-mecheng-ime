@@ -1,4 +1,4 @@
-MODULE methods
+MODULE numerical_methods
 IMPLICIT NONE
 real(8) :: eps1 = 1.e-3, eps2 = 1.e-3
 integer :: i = 1, imax = 100
@@ -64,8 +64,7 @@ function newton_raphson(f,a,b)
     real(8) :: x,f,Y1,Y2,a,b,newton_raphson
 
     DO WHILE (i .LE. imax) ! 100 iterations to prevent infinite loop
-        x = (a*f(b)+b*f(a))/(f(b)-f(a))
-        IF ((b-a) .LT. eps1 .OR. ABS(f(a)) < eps2 .OR. ABS(f(b)) < eps2) THEN
+        IF (ABS(f(a)) .LT. eps1 .OR. ABS(f(a)) < eps2 .OR. ABS(f(b)) < eps2) THEN
             PRINT '(A32,E25.17)', "The value of x: ", x
             PRINT '(A32,E25.17)', "The value of f(x): ", f(x)
             PRINT *, "How many iterations were used in false position method: ", i
