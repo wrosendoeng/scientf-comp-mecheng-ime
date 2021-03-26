@@ -1,7 +1,7 @@
 PROGRAM main
 
   !Declaring precompiled module named "numerical methods" and "func"
-  USE methods
+  USE methods !
   USE func
   !USE getopt_m
 
