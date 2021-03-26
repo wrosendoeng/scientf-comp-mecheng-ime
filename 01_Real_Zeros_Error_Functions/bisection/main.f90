@@ -13,11 +13,11 @@ PROGRAM main
   INTEGER :: i
 
   !Assuming interval of a real function using a .txt file
-  !OPEN(10, FILE="data.txt",ACCESS='SEQUENTIAL', ACTION='READ', &
-  !STATUS='OLD',FORM='FORMATTED')
+  OPEN(10, FILE="data.txt",ACCESS='SEQUENTIAL', ACTION='READ', &
+  STATUS='OLD',FORM='FORMATTED')
 
-  !READ(10,'(F10.8)') a
-  !READ(10,'(F10.8)') b
+  READ(10,'(F10.8)') a
+  READ(10,'(F10.8)') b
 
   !Passing command-line arguments
   !i = 0
