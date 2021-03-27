@@ -2,7 +2,7 @@ PROGRAM main
 
   !Declaring precompiled module named "numerical methods", "numerical_differentiation" and "tested_functions"
   USE numerical_methods, ONLY : secant !newton_raphson
-  !USE numerical_differentiation
+  USE numerical_differentiation
   USE tested_function
 
   !Deactivate implicit variables
