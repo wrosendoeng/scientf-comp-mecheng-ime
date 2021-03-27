@@ -1,8 +1,8 @@
 PROGRAM main
 
   !Declaring precompiled module named "numerical methods", "numerical_differentiation" and "tested_functions"
-  USE numerical_methods, ONLY : newton_raphson
-  USE numerical_differentiation
+  USE numerical_methods, ONLY : secant !newton_raphson
+  !USE numerical_differentiation
   USE tested_function
 
   !Deactivate implicit variables
@@ -16,6 +16,6 @@ PROGRAM main
   READ(10,'(F10.8)') x0
   READ(10,'(F10.8)') x1
   
-  met = newton_raphson(f,nf,x0,x1)
-
+  !met = newton_raphson(f,nf,x0,x1)
+  met = secant(f,x0,x1)
 END PROGRAM

@@ -1,6 +1,6 @@
 MODULE numerical_methods
 IMPLICIT NONE
-REAL(8) :: eps1 = 1.e-4, eps2 = 1.e-4
+REAL(8) :: eps1 = 5.e-4, eps2 = 5.e-4
 INTEGER :: i = 1, imax = 100
 
 CONTAINS
@@ -66,17 +66,49 @@ CONTAINS
             IF (ABS(f(x0)) .LT. eps1) THEN
                 PRINT '(A32,E25.17)', "The value of x: ", x0
                 PRINT '(A32,E25.17)', "The value of f(x): ", f(x0)
-                PRINT *, "How many iterations were used in Netwon-Raphson method: ", i
+                PRINT *, "How many iterations were used in Secant method: ", i
                 STOP
             ELSE
                 x1 = x0 - f(x0)/nf(f,x0)
                 IF (ABS(f(x1)) .LT. eps1 .OR. ABS(x1-x0) .LT. eps2) THEN
                     PRINT '(A32,E25.17)', "The value of x: ", x1
                     PRINT '(A32,E25.17)', "The value of f(x): ", f(x1)
-                    PRINT *, "How many iterations were used in Netwon-Raphson method: ", i
+                    PRINT *, "How many iterations were used in Secant method: ", i
                     STOP
                 ELSE
                     x0 = x1
+                END IF 
+            END IF
+            i = i+1
+        END DO
+
+    END FUNCTION
+
+    FUNCTION secant(f,x0,x1)
+        IMPLICIT NONE 
+        REAL(8) :: f, x0, x1, x2, secant
+
+        DO WHILE (i .LE. imax) ! 100 iterations to prevent infinite loop
+            IF (ABS(f(x0)) .LT. eps1) THEN
+                PRINT '(A32,E25.17)', "The value of x: ", x0
+                PRINT '(A32,E25.17)', "The value of f(x): ", f(x0)
+                PRINT *, "How many iterations were used in secant method: ", i
+                STOP
+            ELSE IF (ABS(f(x1)) .LT. eps1 .OR. ABS(x1-x0) .LT. eps2) THEN
+                PRINT '(A32,E25.17)', "The value of x: ", x1
+                PRINT '(A32,E25.17)', "The value of f(x): ", f(x1)
+                PRINT *, "How many iterations were used in secant method: ", i
+                STOP
+            ELSE
+                x2 = x1 - f(x1)/(f(x1)-f(x0))*(x1-x0)
+                IF (ABS(f(x2)) .LT. eps1 .OR. ABS(x2-x1) .LT. eps2) THEN
+                    PRINT '(A32,E25.17)', "The value of x: ", x2
+                    PRINT '(A32,E25.17)', "The value of f(x): ", f(x2)
+                    PRINT *, "How many iterations were used in Secant method: ", i
+                    STOP
+                ELSE
+                    x0 = x1
+                    x1 = x2
                 END IF 
             END IF
             i = i+1
