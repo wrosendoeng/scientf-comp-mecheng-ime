@@ -1,5 +1,7 @@
 .out
 .exe
-.cbp
-.depend
-.layout
+.sh
+.txt
+.10
+.vscode
+.mod
