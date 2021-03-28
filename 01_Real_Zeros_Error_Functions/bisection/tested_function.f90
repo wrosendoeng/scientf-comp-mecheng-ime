@@ -5,6 +5,6 @@ MODULE tested_function !Function to be tested
       REAL(8),INTENT(IN) :: x
       !Create real polynomial function with known-zeros
       !f = 4.0*cos(x) - exp(x)
-      f = x**(3) - 9*x + 3
+      f = SQRT(400-x**(2))*SQRT(900-x**(2)) - 8*(SQRT(400-x**(2)) + SQRT(900-x**(2))) 
     END function f
 END MODULE tested_function
