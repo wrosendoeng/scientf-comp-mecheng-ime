@@ -20,6 +20,6 @@ Bibliografia: M. A. Gomes Ruggiero, V. L. da Rocha Lopes. Cálculo Numérico - A
 	2. Fatoração LU
 	3. Fatoração PLU
 	4. Fatoração de Cholesky
-	5. Método de Gauss-Seidel
-	6. Método de Gauss-Jacobi
+	5. Método de Gauss-Jacobi
+	6. Método de Gauss-Seidel
 
