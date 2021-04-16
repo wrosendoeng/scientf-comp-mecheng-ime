@@ -1,135 +1,158 @@
-!GAUSS-ELIMINATION MATRIX METHOD
-!Transform linear system into an equivalent linear system with superior triangular shape
+! GAUSS-SEIDEL & GAUSS-JACOBI 
+! ITERATIVE NUMERICAL METHODS
 
 MODULE iterative_resolution_methods
-
-    implicit NONE 
     
-    integer(4) :: idx, jdx, kdx, numrows, rowpivot
+    implicit none 
+    contains
 
-        
-    CONTAINS
+    subroutine gauss_seidel(a,b,x,n) ! Gauss-Seidel Method
 
-    subroutine gauss_seidel(mainmatrixA,vectorB,numrows,aunit,bunit) !(mainmatrixA,vectorB,numrows)
+        logical :: linecriteria(n)
+        integer(4) :: i, j, k=0, n, itermax=100, l_pivot
+        real(8) :: pivot, troca, soma, sum1, sum2, tol = 1.0e-7
+        real(8) :: a(n,n), b(n), maximum(n), x0(n)
+        real(8), intent(out) :: x(n)
         
-        REAL(8) :: auxvector(numrows), mainmatrixA(numrows,numrows), matrixc(numrows,numrows), &
-        & vectorB(numrows), vectorg(numrows), vectorX(numrows), error = 1.0e-3
+        !Pivoting    
+        do k = 1, n-1
+            pivot = a(k,k)
+            l_pivot = k 
+            do i = (k+1),n
+                if (abs(a(i,k)) > abs(pivot)) then 
+                    pivot = a(i,k)
+                    l_pivot = i 
+                end if
+            end do
+            if (pivot == 0.0) exit
+            if (l_pivot /= k) then
+                troca = b(k)
+                b(k) = b(l_pivot)
+                b(l_pivot) = troca
+                do j = 1, n
+                    troca = a(k,j)
+                    a(k,j) = a(l_pivot,j)
+                    a(l_pivot,j) = troca
+                end do
+            end if
+        end do
 
-            integer::i,j ,iter ,k
-            real::old,sum,ea,es=0.00001,s
-            read(*,*)((a(i,j),j=1,n),i=1,n
-            read(*,*)(c(i),i=1,n)
-            read(*,*)(x(i),i=1,n)
-            checking diagonal dominant
-            do i=1,n ;
-            do j=1,n
-            if(i.ne.j)s=s+abs(a(i,j
-            enddo
-            if(abs(a(i,i)).lt.s)then
-            write(*,*) "these equtions are not diagonal
-            stop ; endif
-            do i=1,n
-            ϰ
-            x1=0.99919 , x2=3.0001, and x
-            Gauss-Seidel method
-            dummy
-            )
-            s=0
-            ))
-            -dominance
-            ; enddo
-            3=4.0001
-            ϱ
-            dummy=a(i,i)
-            do j=1,n
-            a(i,j)=a(i,j)/dummy
-            enddo ; c(i)=c(i)/dummy
-            enddo
-            iter=0 ; k=0
-            do while (iter<10.and. k==0)
-            iter=iter+1
-            k=1
-            do i=1,n
-            old=x(i)
-            sum=c(i)
-            do j=1,n
-            if(i.ne.j)then
-            sum=sum-a(i,j)*x(j)
-            endif
-            enddo
-            x(i)=sum
-            print*,x(i)
-            if(x(i).ne.0 .and. k==1) ea=(abs(x(i)-old)/x(i))*100
-            if(ea.gt.es) k=0
-            enddo
-            print*, BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
-            enddo
-            end
-        
-        ! H1_inv = H1^(-1)
-        ! C = -H1_inv*R1
+        ! Criteria of Lines
+        maximum = 0.0    
+        do i = 1, n
+            soma = 0.0
+            do j = 1, n
+                if (i /= j) then
+                    soma = soma + abs(a(i,j))
+                end if
+            end do
+            soma = soma/abs(a(i,i))
+            if (maximum(i) < soma) then
+                maximum(i) = soma
+            end if
+            if (maximum(i) < 1.0) then
+                linecriteria(i) = .true.
+            else
+                linecriteria(i) = .false.
+            end if
+        end do
 
-        ! g = (I+L1)^(-1)*D^(-1)*b
-        ! g = H1_inv*D_inv*b
-        
-        ! Solving x(k+1) = Cx(k) + g
-        
-        
-        ! First estimative of vector X 
-        vectorX(1:numrows) = 0.0
-
-        do kdx = 1, numrows
-            do idx = 1, numrows
-                do jdx = 1, numrows
-                    if (idx /= jdx) then
-                        vectorX(numrows) = (vectorB(idx)-mainmatrixA(idx,jdx))/mainmatrixA(idx,idx)
+        x0 = 2.0e1
+        do while (k <= itermax .and. any(linecriteria) .eqv. .true.)
+            do i = 1, n
+                x(i) = 0.0e0           
+                do j = 1, n 
+                    if (i /= j) then
+                        x(i) = x(i) + a(i,j)*x0(j)
                     end if
                 end do
+                x(i) = (b(i)-x(i))/a(i,i)
             end do
+            if (maxval(abs(x-x0)) < tol) then
+                return
+            end if
+            x0 = x
+            k = k + 1
         end do
+
+        if (any(linecriteria) .eqv. .false.) then
+            print *, "The system does not converge."
+        end if
 
     end subroutine gauss_seidel
 
-    subroutine gauss_jacobi(mainmatrixA,vectorB,numrows) ! Gauss-Jacobi Method
-                
-        ! Line Criteria
-        do idx = 1, numrows
-            do jdx = 1, numrows
-                if (idx /= jdx) then
-                    alpha(idx) = abs(alpha(idx)+mainmatrixA(idx,jdx))/mainmatrixA(idx,idx)
-                else
-                    continue
+    subroutine gauss_jacobi(a,b,x,n)
+        
+        logical :: linecriteria(n)
+        integer(4) :: i, j, k=0, n, itermax=100, l_pivot
+        real(8) :: pivot, troca, soma, tol = 1.0e-7
+        real(8) :: a(n,n), b(n), c(n,n), id(n,n), did(n,n), y(n), maximum(n), x0(n)
+        real(8), intent(out) :: x(n)
+
+        !Pivoting    
+        do k = 1, n-1
+            pivot = a(k,k)
+            l_pivot = k 
+            do i = (k+1),n
+                if (abs(a(i,k)) > abs(pivot)) then 
+                    pivot = a(i,k)
+                    l_pivot = i 
                 end if
             end do
-        end do 
-
-        ! Construction of Matrix C
-        do idx = 1, numrows
-            do jdx = 1, numrows
-                if (idx == jdx) then
-                    matrixc(idx,jdx) = 0
-                else
-                    matrixc(idx,jdx) = -mainmatrixA(idx,jdx)/mainmatrixA(idx,idx)
-                end if
-            end do
-            vectorg(idx) = vectorB(idx)/mainmatrixA(idx,idx)
-        end do 
-
-        ! Solving x(k+1) = Cx(k) + g
-        ! First estimative of vector X 
-        vectorX(1:numrows) = 0.0
-
-        do idx = 1, numrows
-            auxvector = vectorX
-            do jdx = 1, numrows
-                vectorX(idx) = matrixc(idx,jdx)*vectorX(idx) + vectorg(idx)
-            end do
-            vecdiff(idx) = abs(vectorX(idx) - auxvector(idx))
-            diff = maxval(vecdiff)/maxval(vectorX)
-            if (diff .lt. error) then
-                return
+            if (pivot == 0.0) exit
+            if (l_pivot /= k) then
+                troca = b(k)
+                b(k) = b(l_pivot)
+                b(l_pivot) = troca
+                do j = 1, n
+                    troca = a(k,j)
+                    a(k,j) = a(l_pivot,j)
+                    a(l_pivot,j) = troca
+                end do
             end if
         end do
+
+        ! Criteria of Lines
+        maximum = 0.0    
+        do i = 1, n
+            soma = 0.0
+            do j = 1, n
+                if (i /= j) then
+                    soma = soma + abs(a(i,j))
+                end if
+            end do
+            soma = soma/abs(a(i,i))
+            if (maximum(i) < soma) then
+                maximum(i) = soma
+            end if
+            if (maximum(i) < 1.0) then
+                linecriteria(i) = .true.
+            else
+                linecriteria(i) = .false.
+            end if
+        end do
+
+        do i = 1, n 
+            id(i,i) = 1d0
+            did(i,i) = 1d0/a(i,i)
+        end do
+
+        x0 = 2.0e1
+        c = id + matmul(did,a)
+        y = matmul(did,b)
+
+        do while (k <= itermax .and. any(linecriteria) .eqv. .true.)
+            x = y + matmul(c,x0)
+            if (maxval(abs(x-x0)) < tol) then
+                return
+            end if
+            x0 = x
+            k = k + 1
+        end do
+
+        if (any(linecriteria) .eqv. .false.) then
+            print *, "The system does not converge."
+        end if
 
     end subroutine gauss_jacobi
 

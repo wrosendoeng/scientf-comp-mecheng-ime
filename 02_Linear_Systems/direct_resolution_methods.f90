@@ -6,9 +6,9 @@ MODULE direct_resolution_methods
     contains 
     
     subroutine elimination(a,b,x,n)
+        
         integer(4) :: i, j, k, l_pivot, n
-        real(8) :: m, pivot,soma, troca,a(n,n), b(n)
-        real(8), intent(out) :: x(n)
+        real(8) :: m, pivot,soma, troca, a(n,n), b(n), x(n)
     
         ! Pivoting
         do k = 1, n-1
@@ -55,14 +55,11 @@ MODULE direct_resolution_methods
         
     end subroutine elimination
     
-    subroutine lufactorization(a,b,x,n) 
+    subroutine lufactorization(a,b,x,n)
+
         integer(4) :: aux, i, j, k, l_pivot, n, p(n)
-        real(8) :: m, pivot,soma, troca, a(n,n), b(n)
-        real(8), allocatable, dimension(:) :: c, y
+        real(8) :: m, pivot,soma, troca, a(n,n), b(n),c(n), y(n)
         real(8), intent(out) :: x(n)
-    
-        allocate(c(n))
-        allocate(y(n))
     
         !Pivoting
         do i = 1, n 
@@ -122,10 +119,7 @@ MODULE direct_resolution_methods
             end do
             x(i) = (y(i)-soma)/a(i,i)
         end do
-    
-        deallocate(c)
-        deallocate(y)
-        
+
     end subroutine lufactorization
 
 END MODULE direct_resolution_methods
