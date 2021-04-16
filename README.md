@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # INTRODUÇÃO A COMPUTAÇÃO CIENTÍFICA - IME
 
 Primeira cadeira do curso de Mestrado em Engenharia Mecânica pelo IME
@@ -49,5 +48,3 @@ Bibliografia: M. A. Gomes Ruggiero, V. L. da Rocha Lopes. Cálculo Numérico - A
 	4. Fatoração de Cholesky
 	5. Método de Gauss-Jacobi
 	6. Método de Gauss-Seidel
-
->>>>>>> 2bd4f61f96afd92a8f1564a188da886181568064
