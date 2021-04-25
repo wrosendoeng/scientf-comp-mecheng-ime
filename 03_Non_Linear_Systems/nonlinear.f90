@@ -10,18 +10,16 @@ module nonlinear
         real(fgsl_double) :: e1 = 1.0e-6, e2 = 1.0e-6, s(n), x(n), f(n), j(n,n), &
         & j_inv(n,n), result(n)
 
-        ! Factorize Jacobian Matrix
-        call dgetrf(n,n,j,n,ipiv,info)
-        if (info == 0) then
-            call dgetri(n,j,n,ipiv,work,lwork,info)
-        else
-            print *, "The factor U is singular."
-        end if
-
         do k = 1, 100
             f = rosembrock(x)
             j = jacobian(x)
-            call jacobian(x, j, det, j_inv)
+	    call dgetrf(n,n,j,n,ipiv,info)
+            if (info == 0) then
+            	call dgetri(n,j,n,ipiv,work,lwork,info)
+            else
+            	print *, "The factor U is singular."
+            end if
+            
             if (maxval(abs(f)) < e1) then
                 result = x
             else
