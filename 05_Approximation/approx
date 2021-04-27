@@ -1,0 +1,57 @@
+aproximação capitulo 06
+1. interpolação é ruim quando:
+- for extrapolar a função
+- valores com erros imprevisíveis (resultados de medição de experimentos)
+
+2. aparece a aproximação para
+- ajustar uma função tabelada a outra que lhe seja uma boa aproximação
+
+3. função aproxim (phi(x)): somatório de coefs*fçs canônicas
+- aprox linear: 
+-- os coefs são constantes
+-- cada coef aparece linearmente
+-- g(x) pode não ser linear
+
+4. escolha das funções: 
+- observação do gráfico de dispersão
+- fundamentos teóricos
+
+5. definição de proximidade de phi(x) com f(x)
+5.1. mínimos quadrados:
+-- caso discreto (objeto de interesse nesse curso)
+-- caso contínuo
+
+5.1.1. caso discreto
+Ex: Voltagem --> V = Ri
+- g1 = i
+- alfa = R
+
+- Dados:
+pontos(xk,yk), k = 1, 2, ..., m
+funções(gi(x)) i = 1, 2, ..., n
+m > n
+
+yk = f(xk)
+F(a1,a2,...,an) = somatório (k=1 até m) [f(xk)-phi(xk)]² 
+o mínimo de F(a) acontece quando dF/daj = 0 (para cada a1 até an)
+
+para resolver sistema triangular: gesv (dgesv ou sgesv)
+para resolver sistema triangular simétrico: sysv (dsysv ou ssysv)
+para resolver sistema triangular simétrico: sysv (dsysv ou ssysv)
+para resolver sistema triangular simétrico com valores positivos: posv (dposv ou sposv)
+para resolver sistema triangular simétrico armazenados em vetores: spsv (dspsv ou sspsv)
+
+A^t*A*a = A^t*y
+a = (A^t*A)^-1*A^-t*y
+pseudoinversa = (A^t*A)^-1
+
+5.1.1.1. Caso discreto não-linear
+- necessário linearizar
+ex: 
+f(x) = y ~ phi(x) = a1*exp(-a2*x)
+z = ln(y) ~ ln(a1) - a2*x
+
+OBS: ajuste de z não necessariamente minimiza f(x)
+
+- verificar se a função linearizada é razoável (análise gráfica)
+

@@ -3,7 +3,7 @@ module functions
     implicit none 
     contains
 
-    function rosembrock(x,n) result(ros)
+    function rosembrock(x) result(ros)
         implicit none
         real(fgsl_double),intent(in) :: x(2)
         real(fgsl_double)            :: ros(2)
@@ -20,14 +20,13 @@ module functions
         real(fgsl_double)            :: trigbroy(n)
 
         do i = 1, n
-            select case(i)
-            case(1)
-                trigbroy(i) = (3-2*x(i))*x(i) - 2*x(i) + 1
-            case(2:9)
-                trigbroy(i) = (3-2*x(i))*x(i) - x(i-1) - 2*(x+i) + 1
-            case(10)
+            if (i == 1) then
+                trigbroy(i) = (3-2*x(i))*x(i) - 2*x(i+1) + 1
+            else if (i .ge. 2 .and. i .le. n-1) then
+                trigbroy(i) = (3-2*x(i))*x(i) - x(i-1) - 2*x(i+1) + 1
+            else
                 trigbroy(i) = (3-2*x(i))*x(i) - x(i-1) + 1
-            end select
+            end if
         end do
 
     end function
