@@ -17,11 +17,9 @@ Bibliografia: M. A. Gomes Ruggiero, V. L. da Rocha Lopes. Cálculo Numérico - A
 	4. Método da secante
 3. Resolução de Sistemas Lineares por Métodos Diretos e Iterativos:
 	1. Eliminação de Gauss
-	2. Fatoração LU
-	3. Fatoração PLU
-	4. Fatoração de Cholesky
-	5. Método de Gauss-Jacobi
-	6. Método de Gauss-Seidel
+	2. Fatoração PLU
+	3. Método de Gauss-Jacobi
+	4. Método de Gauss-Seidel
 4. Resolução de Sistemas Não-Lineares por Métodos Iterativos:
 	1. Newton
 	2. Newton Discreto
