@@ -41,33 +41,25 @@ module jacobian_matrices
     function general_jacobian(x,func,n) result(jgeneral) ! Approximate Jacobian using Finite-Differences
 
         character(kind=fgsl_char,len=10) :: func ! Rosembrock or Broyden
-        integer(fgsl_int) :: j, n
-        real(fgsl_double) :: h, y0(n), y1(n), x(n), xdelta(n) !yn0(n,1), yn1(n,1)
+        integer(fgsl_int) :: i, n
+        real(fgsl_double) :: h, x(n), xdelta(n)
         real(fgsl_double) :: jgeneral(n,n)
         
-        h = tiny(x)*1.0e3
+        h = 1.e-38
         xdelta = x
         
         select case(func)
         case('2d') ! rosembrock function
-            do j = 1, n
-                xdelta(j) = xdelta(j) + h
-                y0 = rosembrock(x)
-                !yn0 = reshape(y0,(/n,1/))
-                y1 = rosembrock(xdelta)
-                !yn1 = reshape(y1,(/n,1/))
-                jgeneral(:,j) = (y1 - y0)/h
-                xdelta(j) = x(j)
+            do i = 1, n
+                xdelta(i) = xdelta(i) + h
+                jgeneral(:,i) = (rosembrock(xdelta) - rosembrock(x))/h
+                xdelta(i) = x(i)
             end do
         case('2e') ! broyden function
-            do j = 1, n
-                xdelta(j) = xdelta(j) + h
-                y0 = tridiagonal_broyden(x,n)
-                !yn0 = reshape(y0,(/n,1/))
-                y1 = tridiagonal_broyden(xdelta,n)
-                !yn1 = reshape(y1,(/n,1/))
-                jgeneral(:,j) = (y1 - y0)/h
-                xdelta(j) = x(j)
+            do i = 1, n
+                xdelta(i) = xdelta(i) + h
+                jgeneral(:,i) = (tridiagonal_broyden(xdelta,n) - tridiagonal_broyden(x,n))/h
+                xdelta(i) = x(i)
             end do 
         end select
 

@@ -22,11 +22,14 @@ program main
 
     ! Defining a name for Non-Linear Systems Method
     character(kind=fgsl_char,len=10) :: exercise, jacobianoption, linearmethod
-    integer(fgsl_int) :: iter=1, nmax, unit1, length_work
+    integer(fgsl_int) :: iter, nmax, unit1, length_work, itermax
+    real(fgsl_double) :: start, finish
     real(fgsl_double), allocatable :: xvec(:),newton_result(:)
+
+    call cpu_time(start)
     
-    call get_command_argument(1,exercise) !rosembrock = 2d && broyden = 2e
-    call get_command_argument(2,jacobianoption) ! analytical (Newton) or numerical (Discrete Newton)
+    call get_command_argument(1,exercise) ! Rosembrock = '2d'; Broyden = '2e'
+    call get_command_argument(2,jacobianoption) ! analytical (Newton); numerical (Discrete Newton); broyden (Broyden)
     call get_command_argument(3,linearmethod) ! (plu, jacobi or seidel)
 
     open(newunit=unit1,action='write',status='replace',access='sequential', &
@@ -43,15 +46,31 @@ program main
         allocate(xvec(nmax),newton_result(nmax))
         xvec = -1.0_fgsl_double
     case default
-        print *, "Select a correct option between broyden or rosembrock. Try again."
-	stop
+        print *, "Select a correct option: Broyden or Rosembrock. Try again."
+	    stop
     end select 
     
     length_work = 64*nmax
     ! Non-Linear Newton's Resolution Method
-    call newton(nmax, xvec, exercise, jacobianoption, linearmethod, length_work, newton_result)
+    if (jacobianoption == 'analytical'.or. jacobianoption == 'numerical') then
+        call newton(nmax, xvec, exercise, jacobianoption, linearmethod, length_work, newton_result, itermax)
+    else if (jacobianoption == 'broyden') then
+        call broyden(nmax, xvec, exercise, jacobianoption, linearmethod, length_work, newton_result, itermax)
+    else
+        print *, "Select a correct option: Newton, Discrete Newton or Broyden. Try again."
+        stop
+    end if
 
-    write(unit1,'(f18.14)') newton_result
+    call cpu_time(finish)
+
+    write(unit1,'(A)') "Number of iterations:"
+    write(unit1,'(I4)') itermax
+    write(unit1,'(A)') "CPU Time spent in the exercise "//trim(exercise)//" using "//trim(jacobianoption)//" with "&
+    &//trim(linearmethod)//":"
+    write(unit1,'(f6.3,a)') finish-start," seconds."
+    write(unit1,'(A)') "Solution of the exercise "//trim(exercise)//" using "//trim(jacobianoption)//" with "&
+    &//trim(linearmethod)//":"
+    write(unit1,'(f18.15)') newton_result
 
     deallocate(xvec,newton_result)
 

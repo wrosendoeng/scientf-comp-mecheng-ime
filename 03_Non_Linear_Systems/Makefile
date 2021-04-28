@@ -4,6 +4,14 @@ FDEBUGFLAGS = -g -fbacktrace -ffpe-trap=zero,overflow,underflow,denormal
 IDIR = -I/usr/local/include/fgsl/
 LIBS = -lgsl -lfgsl -lopenblas -lm
 
+# When executing .exe, write in this sequence:
+# argument 1 ==> Exercise from Ruggiero's book
+# Rosembrock = '2d'; Broyden = '2e'
+# argument 2 ==> Non-Linear Option 
+# Newton = 'analytical'; Discrete Newton = 'numerical'; Broyden Quasi-Newton = 'broyden'
+# argument 3 ==> Linear Method to support Non-Linear option
+# PLU Factorization = 'plu'; Gauss-Jacobi = 'jacobi'; Gauss-Seidel = 'seidel'
+
 all: chap04nonlinear.exe
 
 chap04nonlinear.exe: functions.o jacobian_matrices.o nonlinear.o direct_resolution_methods.o iterative_resolution_methods.o main.o
