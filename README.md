@@ -24,3 +24,21 @@ Bibliografia: M. A. Gomes Ruggiero, V. L. da Rocha Lopes. Cálculo Numérico - A
 	1. Newton
 	2. Newton Discreto
 	3. Quase Newton (Broyden)
+5. Interpolação
+	1. Interpolação Polinomial
+		1. Resolução do sistema linear
+		2. Forma de Lagrange
+		3. Forma de Newton
+	2. Estudo de erro
+	3. Sobre o grau
+		1. Escolha do grau
+		2. Fenômeno de Runge
+	5. Funções Spline em Interpolação
+		1. Spline Linear
+		2. Spline Cúbica
+6. Aproximação por MMQ:
+	1. Caso Discreto
+	2. Caso Não-Linear
+		1. Testes de alinhamento
+
+
