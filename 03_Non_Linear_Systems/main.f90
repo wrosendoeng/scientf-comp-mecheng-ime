@@ -2,13 +2,6 @@
 ! WRITTEN BY WALLACE RAMOS ROSENDO DA SILVA
 ! PROFESSOR ACHILES ARANTES BASSI
 ! EXERCISE 2D FROM PAGE 206 - RUGGIERO & LOPES' BOOK
-! COMPILING CODE: 
-! Created a makefile to optimize compiling process
-! Enter in Terminal and write:
-! make ; ./chap04nonlinear.exe argument1 ==> argument1 = number of repetitions for this exercise
-
-! ANALYTICAL CORRECT ANSWER: x = transpose of (1 1) ROSEMBROCK
-! ANALYTICAL CORRECT ANSWER: x = transpose of (1 1 1 1 1 1 1 1 1) BROYDEN
 
 program main
     use fgsl
@@ -22,7 +15,7 @@ program main
 
     ! Defining a name for Non-Linear Systems Method
     character(kind=fgsl_char,len=10) :: exercise, jacobianoption, linearmethod
-    integer(fgsl_int) :: iter, nmax, unit1, length_work, itermax
+    integer(fgsl_int) :: iter, nmax, unit1, itermax
     real(fgsl_double) :: start, finish
     real(fgsl_double), allocatable :: xvec(:),newton_result(:)
 
@@ -50,27 +43,29 @@ program main
 	    stop
     end select 
     
-    length_work = 64*nmax
     ! Non-Linear Newton's Resolution Method
-    if (jacobianoption == 'analytical'.or. jacobianoption == 'numerical') then
-        call newton(nmax, xvec, exercise, jacobianoption, linearmethod, length_work, newton_result, itermax)
-    else if (jacobianoption == 'broyden') then
-        call broyden(nmax, xvec, exercise, jacobianoption, linearmethod, length_work, newton_result, itermax)
-    else
+    select case(jacobianoption)
+    case('analytical')
+        call newton(nmax, xvec, exercise, jacobianoption, linearmethod, newton_result, itermax)
+    case('numerical') 
+        call newton(nmax, xvec, exercise, jacobianoption, linearmethod, newton_result, itermax)
+    case('broyden')
+        call broyden(nmax, xvec, exercise, jacobianoption, linearmethod, newton_result, itermax)
+    case default
         print *, "Select a correct option: Newton, Discrete Newton or Broyden. Try again."
         stop
-    end if
+    end select
 
     call cpu_time(finish)
 
     write(unit1,'(A)') "Number of iterations:"
-    write(unit1,'(I4)') itermax
+    write(unit1,'(I10)') itermax
     write(unit1,'(A)') "CPU Time spent in the exercise "//trim(exercise)//" using "//trim(jacobianoption)//" with "&
     &//trim(linearmethod)//":"
-    write(unit1,'(f6.3,a)') finish-start," seconds."
+    write(unit1,'(f8.5,a)') finish-start," seconds."
     write(unit1,'(A)') "Solution of the exercise "//trim(exercise)//" using "//trim(jacobianoption)//" with "&
     &//trim(linearmethod)//":"
-    write(unit1,'(f18.15)') newton_result
+    write(unit1,'(f8.5)') newton_result
 
     deallocate(xvec,newton_result)
 

@@ -45,7 +45,7 @@ module jacobian_matrices
         real(fgsl_double) :: h, x(n), xdelta(n)
         real(fgsl_double) :: jgeneral(n,n)
         
-        h = 1.e-38
+        h = 1.e-10
         xdelta = x
         
         select case(func)

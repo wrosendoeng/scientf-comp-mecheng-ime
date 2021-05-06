@@ -9,66 +9,68 @@ module nonlinear
     
     ! Newton and Discrete Newton uses the same subroutine, differing only
     ! by the jacobian, obtained analytically or numerically
-    subroutine newton(n, x, func, jacobiantype, resmethod, lwork, result, iterations)
+    subroutine newton(n, x, func, jacobiantype, resmethod, result, iterations)
         character(kind=fgsl_char,len=*) :: func, jacobiantype, resmethod
-        integer(fgsl_int) :: k=1, n, ipiv(n), info, lwork, work(lwork), iterations
-        real(fgsl_double) :: e1 = 1.0e-6, e2 = 1.0e-6, s(n), x(n), f(n), j(n,n), result(n)
+        integer(fgsl_int) :: k, n, iterations
+        real(fgsl_double) :: tol1 = 1.e-4, tol2 = 1.e-4, s(n), x(n), f(n), jac(n,n), result(n)
         
         s = 0.0
         do while (k <= 1000)
+            iterations = k
             ! Select function and its jacobian
-            if (func == "2d" .and. jacobiantype == "analytical") then
+            if (func == '2d') then
                 f = rosembrock(x)
-                j = jacobian_rosembrock(x)
-            else if (func == "2d" .and. jacobiantype == "numerical") then
-                f = rosembrock(x)
-                j = general_jacobian(x,func,n)
-            else if (func == "2e" .and. jacobiantype == "analytical") then
+                select case(jacobiantype)
+                case('analytical')
+                    jac = jacobian_rosembrock(x)
+                case('numerical')
+                    jac = general_jacobian(x,func,n)
+                end select
+            else if (func == '2e') then
                 f = tridiagonal_broyden(x,n)
-                j = jacobian_tribroyden(x,n)
-            else if (func == "2e" .and. jacobiantype == "numerical") then
-                f = tridiagonal_broyden(x,n)
-                j = general_jacobian(x,func,n)
+                select case(jacobiantype)
+                case('analytical')
+                    jac = jacobian_tribroyden(x,n)
+                case('numerical')
+                    jac = general_jacobian(x,func,n)
+                end select
             else
-                print *, "At least one of arguments were written wrong. Try again."
+                print *, "At least one of the arguments was written wrong. Try again."
 		        stop
             end if
-            
-            if (maxval(abs(f)) < e1) then
+            if (maxval(abs(f)) <= tol1) then
                 result = x
                 return
             else
                 select case(resmethod)
                 case('plu')
-                    call lufactorization(j,-f,s,n)
+                    call lufactorization(jac,-f,s,n)
                 case('jacobi')
-                    call gauss_jacobi(j,-f,s,n)
+                    call gauss_jacobi(jac,-f,s,n)
                 case('seidel')
-                    call gauss_seidel(j,-f,s,n)
-		        case default
-		            print *, "No one of resolution methods were chosen. Try again."
+                    call gauss_seidel(jac,-f,s,n)
+                case default
+                    print *, "No one of the resolution methods was chosen. Try again."
                 end select
-                result = x + s
-                x = x + s
+                if (maxval(abs(s)) <= tol2) then
+                    result = x + s
+                    return
+                end if
             end if
-            iterations = k
+            x = x + s
             k = k + 1
         end do
-
-        if (k == 1000 .and. maxval(abs(f)) < e1 .and. maxval(abs(s)) < e2) then
-            print ('(a,i4,a)'), "Convergence has not reached in ",k," iterations."
-        end if
 
     end subroutine newton
 
     ! Quasi-Newton Brodyen's Method
-    subroutine broyden(n, x, func, jacobiantype, resmethod, lwork, result, iterations)
+    subroutine broyden(n, x, func, jacobiantype, resmethod, result, iterations)
         character(kind=fgsl_char,len=*) :: func, jacobiantype, resmethod
-        integer(fgsl_int) :: i, j, k=1, n, ipiv(n), info, lwork, work(lwork), iterations, h = 1.e-3
-        real(fgsl_double) :: e1 = 1.0e-6, e2 = 1.0e-6, s(n), x(n), f(n), newf(n), B(n,n), result(n), y(n), u(n)
+        integer(fgsl_int) :: i, j, k, n, iterations
+        real(fgsl_double) :: tol1 = 1.0e-4, tol2 = 1.0e-4, s(n), x(n), f(n), newf(n), B(n,n), result(n), y(n), u(n)
         
         s = 0.0
-        do while (k <= 1000 .or. maxval(abs(f)) > e1 .or. maxval(abs(s)) > e2)
+        do while (k <= 1000)
             iterations = k        
             ! Select function and its jacobian
             if (func == "2d") then
@@ -82,7 +84,7 @@ module nonlinear
                 case('seidel')
                     call gauss_seidel(B,-f,s,n)
 		        case default
-		            print *, "No one of resolution methods were chosen. Try again."
+		            print *, "No one of the resolution methods was chosen. Try again."
                 end select
                 newf = rosembrock(x+s)   
             else if (func == "2e") then
@@ -96,18 +98,25 @@ module nonlinear
                 case('seidel')
                     call gauss_seidel(B,-f,s,n)
 		        case default
-		            print *, "No one of resolution methods were chosen. Try again."
+		            print *, "No one of the resolution methods was chosen. Try again."
                 end select
                 newf = tridiagonal_broyden(x+s,n)
             else
-                print *, "At least one of arguments were written wrong. Try again."
+                print *, "At least one of the arguments was written wrong. Try again."
 		        stop
+            end if
+            if (maxval(abs(f)) < tol1) then
+                result = x
+                return
             end if
             y = (newf - f)
             u = (y - matmul(B,s))/matmul(reshape(s,(/1,n/)),s)
             B = B + matmul(reshape(u,(/n,1/)),reshape(s,(/1,n/)))  
-            result = x + s
-            x = result
+            if (maxval(abs(s)) < tol2) then
+                result = x + s
+                return
+            end if
+            x = x + s
             k = k + 1
         end do
 
