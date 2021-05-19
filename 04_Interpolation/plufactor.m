@@ -1,10 +1,10 @@
 % PLU FACTORIZATION
-function x = plufactor(a,b,n,real_precision)
+function x = plufactor(a,b,n)
 % Defining variables
 aux = int16(0); i = aux; j = i; k = j; l_pivot = k;
 p = zeros(1,n,'int16'); % precision = int8 or int16
 m = double(0); pivot = m; swap = pivot; % Single or double precision
-c = zeros(n,1,real_precision); y = c; x = y;
+c = zeros(n,1); y = c; x = y;
     
     % Pivoting
     for i = 1 : n 
@@ -24,8 +24,8 @@ c = zeros(n,1,real_precision); y = c; x = y;
             break
         end 
         if l_pivot ~= k
-            troca = b(k,:);
-            b(k,:) = b(l_pivot);
+            troca = b(k);
+            b(k) = b(l_pivot);
             b(l_pivot) = troca;
             for j = 1 : n
                 swap = a(k,j);
@@ -39,7 +39,7 @@ c = zeros(n,1,real_precision); y = c; x = y;
             for j = (k+1) : n
                 a(i,j) = a(i,j) - m*a(k,j);
             end
-            b(i,:) = b(i,:) - m*b(k,:);
+            b(i) = b(i) - m*b(k);
         end
     end
     
