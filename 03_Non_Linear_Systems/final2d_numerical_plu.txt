@@ -1,0 +1,7 @@
+Number of iterations:
+         2
+CPU Time spent in the exercise 2d using numerical with plu:
+ 0.00028 seconds.
+Solution of the exercise 2d using numerical with plu:
+ 1.00000
+ 1.00000

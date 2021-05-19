@@ -1,0 +1,7 @@
+Number of iterations:
+         2
+CPU Time spent in the exercise 2d using broyden with plu:
+ 0.00041 seconds.
+Solution of the exercise 2d using broyden with plu:
+ 1.00000
+ 1.00000

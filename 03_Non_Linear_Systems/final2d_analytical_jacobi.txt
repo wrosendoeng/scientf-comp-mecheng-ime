@@ -1,0 +1,7 @@
+Number of iterations:
+      1000
+CPU Time spent in the exercise 2d using analytical with jacobi:
+ 0.00395 seconds.
+Solution of the exercise 2d using analytical with jacobi:
+ 0.00000
+ 0.00000
