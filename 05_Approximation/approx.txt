@@ -54,4 +54,3 @@ z = ln(y) ~ ln(a1) - a2*x
 OBS: ajuste de z não necessariamente minimiza f(x)
 
 - verificar se a função linearizada é razoável (análise gráfica)
-
