@@ -1,4 +1,3 @@
-%
 % MÉTODO DOS MÍNIMOS QUADRADOS para ajustar um polinômio do 1o grau
 %
 % Gera as matrizes A e b que fornecem a0 e a1
@@ -39,8 +38,6 @@ for k = 1 : m
         b(i) = b(i) + z(k)*g(k,i);
     end
 end
-
-%?????????????????????????
 %
 % Cálculo dos coeficientes a1 e a2;
 %
@@ -54,5 +51,4 @@ c = exp(a1);
 d = a2;
 coef = [c,d]';
 %
-%endfunction
 end 

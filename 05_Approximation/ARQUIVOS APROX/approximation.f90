@@ -7,10 +7,10 @@ program approximation
 
     implicit none
 
-    integer(fgsl_int) :: nmax = 17, unidadeleitura, unidadeescrita, rc1, rc2, i, divisoes = 101
+    integer(fgsl_int) :: nmax = 17, unidadeleitura, unidadeescrita, rc1, rc2, i, divisoes = 100
     real(fgsl_double) :: razao, xinicial = 2.0, xfinal = 40.0, x_aprox, y_aprox, coefs(2)
     real(fgsl_double), allocatable :: dadosquestao(:,:), xquestao(:), yquestao(:)
-    
+
     open(newunit=unidadeleitura, & ! Abrir o arquivo csv
     file='dados_interpol.csv', &
     action='read', &
@@ -38,7 +38,7 @@ program approximation
         xquestao(i) = dadosquestao(i+1,1)
         yquestao(i) = dadosquestao(i+1,2)
     end do
-    
+
     coefs = 0.0d0
 
     call naolinear(xquestao,yquestao,nmax,coefs)
@@ -47,9 +47,14 @@ program approximation
     do i = 1, divisoes                         ! Vetor linearmente espacado para calcular a spline
         x_aprox = xinicial + (i-1)*razao           ! X interpolado
         y_aprox = coefs(1)*exp(coefs(2)*x_aprox)   ! Y interpolado
-        write(unidadeescrita,*) x_aprox, y_aprox 
+        write(unidadeescrita,'(f10.6,5X,f10.6)') x_aprox, y_aprox 
     end do
-    
+
+    ! Desalocacao de matrizes
+    deallocate(dadosquestao)
+    deallocate(xquestao)
+    deallocate(yquestao)
+    !print *, coefs
     ! Fechando as unidades de escrita e leitura 
     close(unidadeleitura)
     close(unidadeescrita)
