@@ -1,0 +1,14 @@
+#   GEOMETRY PARAMETERS
+cg0 =   0.407632;     # CG from nose at the beginning
+cg1 =   0.4022700;    # CG from nose [m]
+d   =   0.112738;     # reference diameter of the projectile [m]
+db  =   0.10690;      # boattail diameter [m]
+ix0 =   0.03759;      # Axial Inertia at the beginning [kg/m2]
+iy0 =   0.47817;      # Transverse Inertia at the beginning [kg/m2]
+ix1 =   0.03710;      # Axial Inertia after BB unit burnout [kg/m2]
+iy1 =   0.45798;      # Transverse Inertia after BB unit burnout [kg/m2]
+m0  =   20.4043;      # Initial mass w/ propellant [kg]
+m1  =   19.8190;      # projectile mass without BB unit [kg]
+qm  =   1.2;          # magnus force factor
+qd  =   1.2;          # drag force factor
+
