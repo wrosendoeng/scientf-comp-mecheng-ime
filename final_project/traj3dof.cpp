@@ -64,7 +64,7 @@ int main(void)
     // armazenar o sistema de equacoes
     gsl_odeiv2_system sys = {func, jacobian, 2, &my_params};
 
-    gsl_odeiv2_driver * d = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rkf45,
+    gsl_odeiv2_driver * d = gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk4,
                                   1e-8, 1e-8, 0.0);
     int i, s;
     double t = 0.0, t1 = 100.0;
