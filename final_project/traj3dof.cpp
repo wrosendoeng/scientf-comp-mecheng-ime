@@ -39,29 +39,29 @@ int func(double t, const double y[], double f[], void * params)
     double airdens, mu, p, T;   
     struct param_type *my_params_pointer = (struct param_type *)params;
 
-    double airdens = my_params_pointer->airdens;
-    double axinertia_init = my_params_pointer-> axinertia_init; 
-    double axinertia_fin = my_params_pointer-> axinertia_fin;
-    double azim = my_params_pointer -> azim;
-    double boatdim = my_params_pointer -> boatdim;
-    double bsuth;           // sutherland constant for viscosity [kg/(m.s.K^1/2)]
-    double centgrav0;       // initial center of gravity [m]
-    double centgrav1;       // final center of gravity [m]
-    double dragfactor;      // drag force factor
-    double magfactor;       // magnus force factor
-    double gravity;         // acceleration due to gravity [m/s2]
-    double heatcap;         // heat ratio capacity
-    double lat;             // latitude of launch [radians]
-    double massinit;        // initial projectile mass [kg] 
-    double massfin;         // final projectile mass [kg]
-    double omega;           // earth angular velocity [rad/s]
-    double pinit;           // ambient pressure at sea-level [N/m2]
-    double radearth;        // earth radius
-    double refdim;          // reference of diameter [mm]
-    double univgasconst;    // universal gas constant [J/(kg.K)]
-    double tempgrad;        // temperature gradient [K/m]
-    double tempinit;        // ambient temperature at sea-level [K]
-    double tsuth;           // sutherland's temperature constant [K] 
+    double airdens = my_params_pointer->airdens;                // free air stream density
+    double axinertia_init = my_params_pointer-> axinertia_init; // initial axial moment of inertia
+    double axinertia_fin = my_params_pointer-> axinertia_fin;   // final axial moment of inertia
+    double azim = my_params_pointer -> azim;                    // azimuth [radians]
+    double boatdim = my_params_pointer -> boatdim;              // boattail diameter [m]
+    double bsuth = my_params_pointer ->bsuth;                   // sutherland constant for viscosity [kg/(m.s.K^1/2)]
+    double centgrav0 = my_params_pointer -> centgrav0;          // initial center of gravity [m]
+    double centgrav1 = my_params_pointer -> centgrav1;          // final center of gravity [m]
+    double dragfactor = my_params_pointer -> dragfactor;        // drag force factor
+    double magfactor = my_params_pointer -> magfactor;          // magnus force factor
+    double gravity = my_params_pointer -> gravity;              // acceleration due to gravity [m/s2]
+    double heatcap = my_params_pointer -> heatcap;              // heat ratio capacity
+    double lat = my_params_pointer -> lat;                      // latitude of launch [radians]
+    double massinit = my_params_pointer -> massinit;            // initial projectile mass [kg] 
+    double massfin = my_params_pointer -> massfin;              // final projectile mass [kg]
+    double omega = my_params_pointer -> omega;                  // earth angular velocity [rad/s]
+    double pinit = my_params_pointer -> pinit;                  // ambient pressure at sea-level [N/m2]
+    double radearth = my_params_pointer -> radearth;            // earth radius
+    double refdim = my_params_pointer -> refdim;                // reference of diameter [mm]
+    double univgasconst = my_params_pointer -> univgasconst;    // universal gas constant [J/(kg.K)]
+    double tempgrad = my_params_pointer -> tempgrad;            // temperature gradient [K/m]
+    double tempinit = my_params_pointer -> tempinit;            // ambient temperature at sea-level [K]
+    double tsuth = my_params_pointer -> tsuth;                  // sutherland's temperature constant [K] 
 
     double vel = sqrt(pow(y[3],2)+pow(y[4],2)+pow(y[5],2));
     double g = gravity*(1-0.0026*cos(lat));
