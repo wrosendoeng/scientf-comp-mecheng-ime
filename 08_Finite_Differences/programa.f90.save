@@ -1,0 +1,24 @@
+program main
+	use parameters, wp -> dp
+	use nodes
+	use lapack
+	use fgsl
+	implicit none
+	real(wp) :: hx, hz
+	real(wp) :: q = 20.0, k = 600.0, tinf = 310, tamb = 300, base = 6, l = 3, h = 350 
+	
+integer(intlength) :: i, j
+
+	! call get_command_argument(1,arg1)
+
+	type(node)
+		real(wp), pointer :: x, y, temp
+		integer(intlength) :: numb
+	end type
+	
+	type(node), pointer :: nodes
+	real(wp), allocatable, target :: x(:), y(:), T(:)
+
+	
+
+end program main

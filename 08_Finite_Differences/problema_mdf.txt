@@ -1,0 +1,43 @@
+problema ser resolvido
+h = 350 W/(m2K)
+t00 = 310 K
+q = 20 W/m2
+k = 600 W/(mK)
+b = 6 cm
+l = 3 cm
+t = 300 K
+
+simetria
+conveccao na parte superior
+final do comprimento esta a temp amb
+
+fluxograma
+- props de material
+- geometria
+- condicoes de contorno
+- parametros de discretizacao
+
+	programa ----- malha (posicao dos nos)
+	|	 ----- temperatura dos nos
+	|
+- sistema linear
+openblas
+
+subrotina pra ler arquivo .txt ----------
+					|
+				subrotina pra construir
+					|
+				programa para o sistema linear (lapack)
+					|
+			subroutina para salvar em arquivo .dat
+
+equacao do calor
+d2T/dx2 + d2T/dz2 = g/K
+
+conds contorno:
+q(0,z) = -kdT/dx(0,z) = 20
+q(x,0) = -kdT/dy(x,0) = 0
+-kdT/dx(x,0.03)=h(T-310)
+T(0.06,z) = 300
+
+
