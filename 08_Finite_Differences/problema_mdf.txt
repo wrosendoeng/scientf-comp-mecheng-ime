@@ -1,11 +1,11 @@
 problema ser resolvido
 h = 350 W/(m2K)
-t00 = 310 K
+temperatura no meio livre = 310 K
 q = 20 W/m2
 k = 600 W/(mK)
-b = 6 cm
-l = 3 cm
-t = 300 K
+base = 0.06 m
+largura = 0.03 m
+temperatura = 300 K
 
 simetria
 conveccao na parte superior

@@ -1,0 +1,8 @@
+COND        CONDTERM    CONV
+20.0D0      600.0D0     350.0D0
+TINF        TAMB
+310.D0D0    300.0D0
+BASE        LADO
+6.0E-2      3.0E-2
+NOSX        NOSY
+3           3
