@@ -7,12 +7,12 @@ module parameters
   integer(4),parameter:: PARM_SP = 4, PARM_DP = 8, PARM_SI = 4, PARM_LI = 8, &
     PARM_SCL = 40, PARM_LCL = 100
   
-  !SP = single precision real
-  !SP = Double precision real
+  !SP = Single Precision Real  
+  !DP = Double precision real
   !SI = Integer (short)
-  !LI =  Integet (Long)
-  !WP = WORKING PRECICION
-  !IntLength =  Integer Length
+  !LI = Integet (long)
+  !WP = Working Precision
+  !IntLength = Integer Length
   !SCL = Short Character Length
   !LCL = Long Character Length
     

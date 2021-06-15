@@ -1,107 +1,202 @@
 program main
-	use parameters, only: wp => PARM_DP, intlength => PARM_SI, fnl => PARM_SCL ! double-precision
-	use module_node
-	use constants
+	use parameters, only: wp => PARM_DP, intlength => PARM_SI, fnl => PARM_SCL
 
 	implicit none
-	character(fnl) :: iname, oname
-	integer(intlength) :: i, j, k, lcorner, numb_pts, nodesx=10, nodesy=10, nodes_total
-	real(wp) :: hx, hy, g = 10.0, qcond, condterm, conv, Tinf, Tamb, plate_length, plate_width
+
+	character(len=fnl) :: iname, oname		
+	integer(intlength) :: divx, divy, i, info, j, k, nodesx, nodesy, nodes_total, numb_pts, &
+	number_equations
+	real(wp) :: thermal_conductivity, convec_constant, conv_factor, cond_factor, &
+	genterm_quad, hx, hy, plate_length, plate_width, heat_flux, Temp_free_path, Temp_right_side
+
+	! Representing nodes as derived-v_divpe
+	type :: node
+		real(wp), pointer :: x, y, temp ! horizontal and vertical positions & Temperature
+		integer(intlength) :: numb		! Number of node in matrix(i,j)
+	end type node 
+	
+	! Allocatable variables and Pointers
+	integer(intlength), allocatable :: ipiv(:)	! Permitting permutation
+	real(wp), allocatable :: x(:), y(:), temp_coefs(:,:), temp_solutions(:) ! Corresponding to A and b of Ax=b system.
 	type(node), pointer :: mdfnodes(:,:)
-	real(wp), allocatable :: x(:), y(:), T(:) 
-	target :: x, y, T
+	target :: x, y, temp_solutions
 
 	! Read command-line interface for input 
-	call get_command_argument(1,iname)	!iname = "properties.txt"
+	call get_command_argument(1,iname)	!e.g: "properties.x_squaredt_div"
 	! Read command-line interface for output
-	call get_command_argument(2,oname)	!oname = "results.dat"		
-	! Read thermal properties from txt file
-	call therm_properties()
+	call get_command_argument(2,oname)	!e.g: "results.dat"		
+	! Read thermal properties from x_squaredt_div file
+	call therm_properties
 
-	hx = plate_length/real(nodesx-1,kind=wp)
-	hy = plate_width/real(nodesy-1,kind=wp)
+	nodesx = divx + 1 ! number of nodes in x coordinates
+	nodesy = divy + 1 ! number of nodes in y coordinates
 	nodes_total = nodesx*nodesy
 	
-	allocate(mdfnodes(nodesx,nodesy),x(nodesx),y(nodesy),T(nodes_total))
+	allocate(mdfnodes(nodesx,nodesy), x(nodesx), y(nodesy), ipiv(nodes_total), &
+	temp_coefs(nodes_total,nodes_total), temp_solutions(nodes_total))
 
-	do i = 1, nodesx, 1
-		x(i) = hx*real(i-1,kind=wp)
-	end do
-	do j = 1, nodesy, 1
-		y(j) = hy*real(j-1,kind=wp)
-	end do
+	! Developing mesh
+	call constructing_nodes
+	! Creating matrix of coefficients for implicit method
+	temp_solutions = 0.0e0_wp
+	temp_coefs = 0.0e0_wp
+	call arrange_coefficient_matrix
 
-	numb_pts = 0
-	do i = 1, nodesx
-		do j = 1, nodesy
-			numb_pts = numb_pts + 1
-			mdfnodes(i,j)%x => x(i) 
-			mdfnodes(i,j)%y => y(j)
-			mdfnodes(i,j)%temp => T(numb_pts)
-			mdfnodes(i,j)%numb = numb_pts
-		end do
-	end do
+	! Calculating linear system with OpenBlas/LAPACK GESV (Ax = b) 
+	select case (wp)
+	case (8)
+		call dgesv(nodes_total,1,temp_coefs,nodes_total,ipiv,temp_solutions,nodes_total,info)
+	case default
+		call sgesv(nodes_total,1,temp_coefs,nodes_total,ipiv,temp_solutions,nodes_total,info)
+	end select
 
-	do i = 1, nodesx, 1
-		mdfnodes(i,1)%temp = 0.0e4
-		mdfnodes(i,nodesy)%temp = 3.0e2
-	end do
-	
-	do j = 1, nodesy, 1
-		T(j+1) = T(j) - qcond*hx/condterm
-	end do
+	if(info .gt. 0) then 
+		write(*,*)'The diagonal element of the triangular factor of temp_coefs,'
+		write(*,*)'U(',info,',',info,') is zero, so that'
+		write(*,*)'temps_coefs is singular; the solution could not be computed.'
+		stop
+	end if
 
-	lcorner = (nodesx-1)*nodesy
-	do k = lcorner, nodes_total, 1
-		T(k) = T(k-nodesy) - conv*hx*(T(k)-Tinf)
-	end do
+	call temperature_field
 
-	do j = 2, nodesy-1, 1
-		do i = 2, nodesx-1, 1
- 			mdfnodes(i,j)%temp = 0.5*(hx**2*hy**2)*((mdfnodes(i+1,j)%temp+mdfnodes(i-1,j)%temp)/hx**2&
-			+(mdfnodes(i,j+1)%temp+mdfnodes(i,j-1)%temp)/hy**2-g/condterm)/(hx**2+hy**2)
-		end do
-	end do
-	
-	call temperature_field()
-	
+	deallocate(mdfnodes, x, y, ipiv, temp_coefs, temp_solutions)
+ 
 	contains
 
-	subroutine therm_properties()
-		integer(intlength) :: iunit
+	subroutine therm_properties
+		integer(intlength) :: iunit, ioserror
 
-		open(newunit=iunit,status='old',file=trim(iname), action='read',form='formatted',access='sequential',position='rewind') 
-		
+		open(newunit=iunit,status='old',file=trim(iname), iostat= ioserror,&
+		action='read',form='formatted',access='sequential',position='rewind') 
+
 		read(iunit,*)
-		read(iunit,*) qcond, condterm, conv
+		read(iunit,*) heat_flux, thermal_conductivity
 		read(iunit,*)
-		read(iunit,*) Tinf, Tamb
+		read(iunit,*) convec_constant, genterm_quad
+		read(iunit,*)
+		read(iunit,*) Temp_free_path, Temp_right_side
 		read(iunit,*)
 		read(iunit,*) plate_length, plate_width
+		read(iunit,*)
+		read(iunit,*) divx, divy
 
 		close(iunit)
 
 	end subroutine therm_properties
 
-	subroutine temperature_field()
-		integer(intlength) :: ounit
-		real(wp), allocatable :: x(:), y(:), T(:)
-
-		open(newunit=ounit,status='replace',file=trim(oname),action='write',form='formatted',access='sequential',position='rewind') 
-
-		allocate(x(nodesx),y(nodesy),T(nodes_total))
-
+	subroutine constructing_nodes()
+		
+		hx = plate_length/real(divx,kind=wp)
+		hy = plate_width/real(divy,kind=wp)
+	
+		do i = 1, nodesx, 1
+			x(i) = hx*real(i-1,kind=wp)
+		end do
 		do j = 1, nodesy, 1
-			do i = 1, nodesx
-				write(ounit,*) mdfnodes(i,j)%numb, mdfnodes(i,j)%x, mdfnodes(i,j)%y, mdfnodes(i,j)%temp
+			y(j) = hy*real(j-1,kind=wp)
+		end do
+	
+		numb_pts = 0
+		do i = 1, nodesx
+			do j = 1, nodesy
+				numb_pts = numb_pts + 1
+				mdfnodes(i,j)%x => x(i) 
+				mdfnodes(i,j)%y => y(j)
+				mdfnodes(i,j)%temp => temp_solutions(numb_pts)
+				mdfnodes(i,j)%numb = numb_pts
 			end do
-			write(ounit,*) ''
+		end do
+	end subroutine constructing_nodes
+	
+	subroutine arrange_coefficient_matrix()
+		real(wp) :: term_quad, h_div, v_div
+
+		number_equations = 0
+		conv_factor = convec_constant/thermal_conductivity
+		cond_factor = heat_flux/thermal_conductivity
+		h_div = 1.0e0_wp/hx
+		v_div = 1.0e0_wp/hy
+		term_quad = h_div**2 + v_div**2
+
+		do i = 1, nodesy, 1
+			do j = 1, nodesx, 1
+				number_equations = mdfnodes(i,j)%numb
+				! BOTTOM PLATE SIDE (INSULATED)
+				if (i == 1 .and. j > 1 .and. j < nodesx) then
+					temp_coefs(number_equations,number_equations) = 1.0e0_wp
+					temp_coefs(number_equations,number_equations-1) = 1.0e0_wp
+					temp_coefs(number_equations,number_equations+nodesx) = -1.0e0_wp
+					temp_coefs(number_equations,number_equations+1) = -1.0e0_wp
+					temp_solutions(number_equations) = 2.0e0_wp*cond_factor*hx
+				! LEFT-BOTTOM CORNER (INSULATED WITH HEAT FLUX)
+				else if (i == 1 .and. j == 1) then
+					temp_coefs(number_equations,number_equations) = 2.0e0_wp
+					temp_coefs(number_equations,number_equations+1) = -1.0e0_wp
+					temp_coefs(number_equations,number_equations+nodesx) = -1.0e0_wp
+					temp_solutions(number_equations) = cond_factor*hx
+				! RIGHT-CORNER PLATE (INSULATED WITH PRESCRIBED TEMPERATURE)
+				else if (i == 1 .and. j == nodesx) then
+					temp_coefs(number_equations,number_equations) = 1.0e0_wp
+					temp_coefs(number_equations,number_equations-1) = 1.0e0_wp
+					temp_coefs(number_equations,number_equations+nodesx) = -1.0e0_wp 
+					temp_solutions(number_equations) = Temp_right_side - cond_factor*hx
+				! RIGHT-SIDE PLATE (INSULATED WITH PRESCRIBED TEMPERATURE)
+				else if (i > 1 .and. i < nodesy .and. j == nodesx) then
+					temp_coefs(number_equations,number_equations) = 1.0e0_wp
+					temp_coefs(number_equations,number_equations-1) = -1.0e0_wp
+					temp_coefs(number_equations,number_equations-1) = -1.0e0_wp
+					temp_solutions(number_equations) = Temp_right_side - cond_factor*hx
+				! LEFT PLATE SIDE (HEAT FLUX)
+				else if (i > 1 .and. i < nodesy .and. j == 1) then
+					temp_coefs(number_equations,number_equations) = 1.0e0_wp
+					temp_coefs(number_equations,number_equations+1) = 1.0e0_wp
+					temp_coefs(number_equations,number_equations+nodesx) = -1.0e0_wp
+					temp_coefs(number_equations,number_equations-nodesx) = -1.0e0_wp
+					temp_solutions(number_equations) = -cond_factor*hx
+				!LEFT TOP CORNER 
+				else if (i == nodesy .and. j == 1) then
+					temp_coefs(number_equations,number_equations) = 2.0e0_wp + conv_factor*hy
+					temp_coefs(number_equations,number_equations+1) = -1.0e0_wp
+					temp_coefs(number_equations,number_equations-nodesx) = -1.0e0_wp
+					temp_solutions(number_equations) = cond_factor*hx + conv_factor*hx*Temp_free_path
+				! TOP PLATE SIDE (HEAT FLUX AND CONVECTION)
+				else if (i == nodesy .and. j > 1 .and. j < nodesx) then
+					temp_coefs(number_equations,number_equations) = 1.0e0_wp + conv_factor*hy
+					temp_coefs(number_equations,number_equations-nodesx) = -1.0e0_wp
+					temp_coefs(number_equations,number_equations-1) = 1.0e0_wp
+					temp_coefs(number_equations,number_equations+1) = -1.0e0_wp
+					temp_solutions(number_equations) = 2.0e0_wp*cond_factor*hx + conv_factor*hy*Temp_free_path
+				else if (i == nodesy .and. j == nodesx) then
+					temp_coefs(number_equations,number_equations) = conv_factor*hy
+					temp_coefs(number_equations,number_equations-nodesx) = -1.0e0_wp
+					temp_coefs(number_equations,number_equations-1) = 1.0e0_wp
+					temp_solutions(number_equations) = cond_factor*hx + conv_factor*hy*Temp_free_path
+				else
+					temp_coefs(number_equations,number_equations) = -2.0e0_wp*term_quad
+					temp_coefs(number_equations,number_equations+1) = h_div**2
+					temp_coefs(number_equations,number_equations-1) = h_div**2
+					temp_coefs(number_equations,number_equations+nodesx) = v_div**2
+					temp_coefs(number_equations,number_equations-nodesx) = v_div**2
+					temp_solutions(number_equations) = -genterm_quad/thermal_conductivity
+				end if
+			end do
 		end do
 
-		close(ounit)
+	end subroutine arrange_coefficient_matrix
 
-		deallocate(mdfnodes,x,y,T)
-		
+	subroutine temperature_field
+		integer(intlength) :: ounit
+
+		open(newunit=ounit,status='replace',file=trim(oname),action='write', &
+		form='formatted',access='sequential') 
+
+		do i = 1, nodesy, 1
+			do j = 1, nodesx, 1
+				write(ounit,'(i3,3X,f7.2,3X,f7.2,3X,f7.2)') mdfnodes(i,j)%numb,mdfnodes(i,j)%x*1.0e2,mdfnodes(i,j)%y*1.0e2,mdfnodes(i,j)%temp
+			end do
+			write(ounit,*) ' '
+		end do
+		close(unit=ounit)
 	end subroutine temperature_field
 
 end program main
