@@ -4,8 +4,7 @@ program main
 	implicit none
 
 	character(len=fnl) :: iname, oname		
-	integer(intlength) :: divx, divy, i, info, j, k, nodesx, nodesy, nodes_total, numb_pts, &
-	number_equations
+	integer(intlength) :: divx, divy, i, info, j, k, nodesx, nodesy, nodes_total, numb_pts
 	real(wp) :: thermal_conductivity, convec_constant, conv_factor, cond_factor, &
 	genterm_quad, hx, hy, plate_length, plate_width, heat_flux, Temp_free_path, Temp_right_side
 
@@ -111,73 +110,70 @@ program main
 	subroutine arrange_coefficient_matrix()
 		real(wp) :: term_quad, h_div, v_div
 
-		number_equations = 0
+		mdfnodes(i,j)%numb = 0
 		conv_factor = convec_constant/thermal_conductivity
 		cond_factor = heat_flux/thermal_conductivity
-		h_div = 1.0e0_wp/hx
-		v_div = 1.0e0_wp/hy
-		term_quad = h_div**2 + v_div**2
+		h_div = 1.0e0_wp/hx**2
+		v_div = 1.0e0_wp/hy**2
+		term_quad = h_div + v_div
 
 		do i = 1, nodesy, 1
 			do j = 1, nodesx, 1
-				number_equations = mdfnodes(i,j)%numb
 				! BOTTOM PLATE SIDE (INSULATED)
 				if (i == 1 .and. j > 1 .and. j < nodesx) then
-					temp_coefs(number_equations,number_equations) = 1.0e0_wp
-					temp_coefs(number_equations,number_equations-1) = 1.0e0_wp
-					temp_coefs(number_equations,number_equations+nodesx) = -1.0e0_wp
-					temp_coefs(number_equations,number_equations+1) = -1.0e0_wp
-					temp_solutions(number_equations) = 2.0e0_wp*cond_factor*hx
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i,j)%numb) = 1.0e0_wp
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i,j-1)%numb) = 1.0e0_wp
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i+1,j)%numb) = -1.0e0_wp
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i,j+1)%numb) = -1.0e0_wp
+					temp_solutions(mdfnodes(i,j)%numb) = 2.0e0_wp*cond_factor*hx*hy
 				! LEFT-BOTTOM CORNER (INSULATED WITH HEAT FLUX)
 				else if (i == 1 .and. j == 1) then
-					temp_coefs(number_equations,number_equations) = 2.0e0_wp
-					temp_coefs(number_equations,number_equations+1) = -1.0e0_wp
-					temp_coefs(number_equations,number_equations+nodesx) = -1.0e0_wp
-					temp_solutions(number_equations) = cond_factor*hx
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i,j)%numb) = 2.0e0_wp
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i,j+1)%numb) = -1.0e0_wp
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i+1,j)%numb) = -1.0e0_wp
+					temp_solutions(mdfnodes(i,j)%numb) = cond_factor*hx
 				! RIGHT-CORNER PLATE (INSULATED WITH PRESCRIBED TEMPERATURE)
-				else if (i == 1 .and. j == nodesx) then
-					temp_coefs(number_equations,number_equations) = 1.0e0_wp
-					temp_coefs(number_equations,number_equations-1) = 1.0e0_wp
-					temp_coefs(number_equations,number_equations+nodesx) = -1.0e0_wp 
-					temp_solutions(number_equations) = Temp_right_side - cond_factor*hx
+				else if (j == nodesx) then
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i,j)%numb) = 1.0e0_wp
+					temp_solutions(mdfnodes(i,j)%numb) = Temp_right_side
 				! RIGHT-SIDE PLATE (INSULATED WITH PRESCRIBED TEMPERATURE)
 				else if (i > 1 .and. i < nodesy .and. j == nodesx) then
-					temp_coefs(number_equations,number_equations) = 1.0e0_wp
-					temp_coefs(number_equations,number_equations-1) = -1.0e0_wp
-					temp_coefs(number_equations,number_equations-1) = -1.0e0_wp
-					temp_solutions(number_equations) = Temp_right_side - cond_factor*hx
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i,j)%numb) = 1.0e0_wp
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i,j)%numb-1) = -1.0e0_wp
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i,j)%numb-1) = -1.0e0_wp
+					temp_solutions(mdfnodes(i,j)%numb) = Temp_right_side
 				! LEFT PLATE SIDE (HEAT FLUX)
 				else if (i > 1 .and. i < nodesy .and. j == 1) then
-					temp_coefs(number_equations,number_equations) = 1.0e0_wp
-					temp_coefs(number_equations,number_equations+1) = 1.0e0_wp
-					temp_coefs(number_equations,number_equations+nodesx) = -1.0e0_wp
-					temp_coefs(number_equations,number_equations-nodesx) = -1.0e0_wp
-					temp_solutions(number_equations) = -cond_factor*hx
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i,j)%numb) = 1.0e0_wp
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i,j+1)%numb) = 1.0e0_wp
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i+1,j)%numb) = -1.0e0_wp
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i-1,j)%numb) = -1.0e0_wp
+					temp_solutions(mdfnodes(i,j)%numb) = -cond_factor*hx
 				!LEFT TOP CORNER 
 				else if (i == nodesy .and. j == 1) then
-					temp_coefs(number_equations,number_equations) = 2.0e0_wp + conv_factor*hy
-					temp_coefs(number_equations,number_equations+1) = -1.0e0_wp
-					temp_coefs(number_equations,number_equations-nodesx) = -1.0e0_wp
-					temp_solutions(number_equations) = cond_factor*hx + conv_factor*hx*Temp_free_path
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i,j)%numb) = 2.0e0_wp + conv_factor*hy
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i,j+1)%numb) = -1.0e0_wp
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i-1,j)%numb) = -1.0e0_wp
+					temp_solutions(mdfnodes(i,j)%numb) = cond_factor*hx + conv_factor*hx*Temp_free_path
 				! TOP PLATE SIDE (HEAT FLUX AND CONVECTION)
 				else if (i == nodesy .and. j > 1 .and. j < nodesx) then
-					temp_coefs(number_equations,number_equations) = 1.0e0_wp + conv_factor*hy
-					temp_coefs(number_equations,number_equations-nodesx) = -1.0e0_wp
-					temp_coefs(number_equations,number_equations-1) = 1.0e0_wp
-					temp_coefs(number_equations,number_equations+1) = -1.0e0_wp
-					temp_solutions(number_equations) = 2.0e0_wp*cond_factor*hx + conv_factor*hy*Temp_free_path
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i,j)%numb) = 1.0e0_wp + conv_factor*hy
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i-1,j)%numb) = -1.0e0_wp
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i,j-1)%numb) = 1.0e0_wp
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i,j+1)%numb) = -1.0e0_wp
+					temp_solutions(mdfnodes(i,j)%numb) = 2.0e0_wp*cond_factor*hx + conv_factor*hy*Temp_free_path
 				else if (i == nodesy .and. j == nodesx) then
-					temp_coefs(number_equations,number_equations) = conv_factor*hy
-					temp_coefs(number_equations,number_equations-nodesx) = -1.0e0_wp
-					temp_coefs(number_equations,number_equations-1) = 1.0e0_wp
-					temp_solutions(number_equations) = cond_factor*hx + conv_factor*hy*Temp_free_path
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i,j)%numb) = conv_factor*hy
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i,j)%numb-nodesx) = -1.0e0_wp
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i,j)%numb-1) = 1.0e0_wp
+					temp_solutions(mdfnodes(i,j)%numb) = cond_factor*hx + conv_factor*hy*Temp_free_path
 				else
-					temp_coefs(number_equations,number_equations) = -2.0e0_wp*term_quad
-					temp_coefs(number_equations,number_equations+1) = h_div**2
-					temp_coefs(number_equations,number_equations-1) = h_div**2
-					temp_coefs(number_equations,number_equations+nodesx) = v_div**2
-					temp_coefs(number_equations,number_equations-nodesx) = v_div**2
-					temp_solutions(number_equations) = -genterm_quad/thermal_conductivity
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i,j)%numb) = -2.0e0_wp*term_quad
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i,j)%numb+1) = h_div
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i,j)%numb-1) = h_div
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i,j)%numb+nodesx) = v_div
+					temp_coefs(mdfnodes(i,j)%numb,mdfnodes(i,j)%numb-nodesx) = v_div
+					temp_solutions(mdfnodes(i,j)%numb) = -genterm_quad/thermal_conductivity
 				end if
 			end do
 		end do

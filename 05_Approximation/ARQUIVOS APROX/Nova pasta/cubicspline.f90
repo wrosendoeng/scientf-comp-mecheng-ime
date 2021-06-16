@@ -4,14 +4,14 @@ module cubicspline
     implicit none
     
     contains
-    subroutine spline3(x,y,n,valor,s)
+    function spline3(x,y,n,valor) result(s)
         
         integer(fgsl_int) :: i, j, k, index
-        real(fgsl_double) :: g(n), h(n-1), matrixdiff(n-2,n), vectordiff(n-1), v(n-2), subdivs(n,3), &
-         limesq, newmatrix(n-2,n-2), a(n-1), b(n-1), c(n-1), d(n), difdiv(n-1)
+        real(fgsl_double) :: g(n), h(n-1), matrixdiff(n-2,n), vectordiff(n-1), v(n-2), subdivs(n-1,3), &
+         limesq, newmatrix(n-2,n-2), a(n-1), b(n-1), c(n-1), d(n), difdiv(n-1), x1(n-1), x2(n-1), bins(n-1)
         integer(fgsl_int), intent(in) :: n
         real(fgsl_double), intent(in) :: x(n), y(n), valor
-        real(fgsl_double), intent(out) :: s
+        real(fgsl_double) :: s
         
         h = x(2:n) - x(1:n-1)
         difdiv = (y(2:n)-y(1:n-1))/h
@@ -41,24 +41,28 @@ module cubicspline
         d = y
         
         ! Criando uma matriz para delimitar os intervalos de aplicacao da spline
-        do i = 1,n
-            subdivs(i,1) = i    
+        do i = 1,n-1
+            subdivs(i,1) = i
+            subdivs(i,2) = x(i)
+            subdivs(i,3) = x(i+1)
         end do
-        subdivs(:,2) = x
-        subdivs(:,3) = y
+        
+        bins = int(subdivs(:,1))
+        x1 = subdivs(:,2)
+        x2 = subdivs(:,3)
         ! Procurar o index que contem o range em que a variavel "valor" esta presente
         ! ex: valor = 2.0 ==> x1 = 1.59 e x2 = 4.46 ==> index = 1 (1o intervalo da questao)
         ! limesq = o valor menor do intervalo (por isso na esquerda)
-        do i = 1, n
-            if (valor .ge. subdivs(i,2) .and. valor .le. subdivs(i,3)) then
-                index = int(subdivs(i,1))
-                limesq = subdivs(i,2)
+        do i = 1, n-1
+            if (valor .ge. x1(i) .and. valor .le. x2(i)) then
+                index = bins(i)
+                limesq = x1(i)
             end if
         end do
         ! Calculando o polinomio interpolador de acordo com o intervalo
         s = a(index)*(valor-limesq)**3 + b(index)*(valor-limesq)**2 & 
         + c(index)*(valor-limesq) + d(index)
         
-    end subroutine spline3
+    end function spline3
     
 end module cubicspline

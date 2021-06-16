@@ -4,9 +4,9 @@ FDEBUGFLAGS = -g -fbacktrace -ffpe-trap=zero,overflow,underflow,denormal
 IDIR = -I/usr/local/include/fgsl/
 LIBS = -lgsl -lfgsl -lopenblas -lm
 
-all: csplinefgsl.exe
+all: cspline.exe
 
-csplinefgsl.exe: interpolar_fgsl.o
+cspline.exe: interpolar.f90 direct_resolution_methods.o cubicspline.o
 	$(FC) $(FFLAGS) -o $@ $(IDIR) $^ $(LIBS)
 
 %.o: %.f90

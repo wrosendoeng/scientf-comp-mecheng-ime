@@ -7,7 +7,7 @@ LIBS = -lopenblas -lm
 
 all: heat2dequation.exe
 
-heat2dequation.exe: main.o parameters.o
+heat2dequation.exe: parameters.o main.o
 	$(FC) $(FFLAGS) -o $@ $(IDIR) $^ $(LIBS)
 
 %.o: %.f90
