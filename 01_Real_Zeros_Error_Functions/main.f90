@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 PROGRAM main
 
   !Declaring precompiled module named "numerical methods", "numerical_differentiation" and "tested_functions"
@@ -22,7 +21,6 @@ PROGRAM main
   !met = newton_raphson(f,nf,x0,x1)
   !met = secant(f,x0,x1)
 
-=======
 PROGRAM main
 
   !Declaring precompiled module named "numerical methods", "numerical_differentiation" and "tested_functions"
@@ -45,6 +43,5 @@ PROGRAM main
   met = falsepos(f,x0,x1)
   !met = newton_raphson(f,nf,x0,x1)
   !met = secant(f,x0,x1)
-
->>>>>>> 2bd4f61f96afd92a8f1564a188da886181568064
+  
 END PROGRAM
