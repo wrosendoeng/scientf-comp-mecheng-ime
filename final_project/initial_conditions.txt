@@ -1,0 +1,16 @@
+# x_position            # y_position
+0.0d0                   0.0d0
+# z_position            # time_step
+0.0d0                   5.0d-2
+# muzzle velocity       # twist
+8.96d2                  2.5d1
+# elevation angle       # azimuthal angle
+4.5d1                   0.0d0
+# Ix0                   # CG0
+3.759d-2                4.07632d-1 
+# Ix1                   # CG1
+3.710d-2                4.0227d-1 
+# initial mass          # final mass
+2.04043d1               1.98190d1
+# reference diameter    # boattail diameter
+1.12738d-1              1.0690d-1

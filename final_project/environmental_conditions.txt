@@ -1,0 +1,14 @@
+# pressure at sea level     # temperature at sea level
+1.01325d5                   2.8815d2    
+# universal gas constant    # heat capacity ratio
+2.8705d2                    1.4d0
+# acceleration of gravity   # temperature gradient
+9.80665d0                   6.5d-3
+# earth angular velocity    # earth radius
+7.292d-5                    6.371d6
+# Rio de Janeiro latitude   # azimuthal angle
+2.3d1                       0.0d0
+# Sutherland's visc. const. # Sutherland's temp. const.
+1.458d-6                    1.104d2
+# magnus force factor       # drag force factor
+1.2d0                       1.2d0
