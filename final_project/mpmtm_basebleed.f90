@@ -7,14 +7,11 @@ module mpmtm
 
     contains
 
-    function traj4DOF(time,muzzle_input,environmental_properties,aero_coefs,propellant_data) result(muzzle_output)
-        ! Preparing variable for FGSL Interpolation
-        integer(fgsl_int) :: status, cd0_status, cdb_status, cd2_status, cla_status, cmag_status, cma_status, cspin_status
-        type(fgsl_interp_accel) :: alloc_accel, prop_accel
-        type(fgsl_spline) :: cspline, prop_cspline
+    function traj4DOF(time,muzzle_input,firing_data,environmental_properties,aero_coefs,propellant_data) result(muzzle_output)
         
         ! Inputs and outputs
-        real(wp), intent(in) :: environmental_properties(12),  muzzle_input(13), propellant_data(30,8), time
+        real(wp), intent(in) :: time, firing_data(16), muzzle_input(13), environmental_properties(14), &
+        aero_coefs(30,19), propellant_data(1402,2)
         real(wp)             :: muzzle_output(13)
 
         ! Declaring variables from environmental properties text file 
@@ -23,29 +20,46 @@ module mpmtm
         drag_factor
 
         ! Declaring variables imported from the PRODAS file
-        real(wp), dimension(30) :: mach_prodas, cx0_vector, cxb_vector, cd2_vector, cla_vector, cmag_f_vector, cma_vector, cspin_vector
+        real(wp), dimension(30) :: mach_prodas, cx0_vector, cxb_vector, cd2_vector, cla_vector, &
+        cmag_f_vector, cma_vector, cspin_vector
 
         ! Variables used along the subroutine
         real(wp) :: x_pos, y_pos, z_pos, vx, vy, vz, vel_module, velocity(3), aex, aey, aez, yaw_repose_module, &
         yaw_repose_vector(3), proj_mass, axial_inertia, center_gravity, spin, gravity, temperature, pressure, &
-        density, dyn_viscosity, mach_number, reynolds_number, cd0, cdb, cd2, cla, cmag, cma, cspin, coriolis_accel(3), &
+        density, dyn_viscosity, mach_number, reynolds_number, cd0, cdb, cd2, cla, cmag_f, cma, cspin, coriolis_accel(3), &
         drag_accel(3), grav_accel(3), lift_accel(3), mfx, mfy, mfz, magnus_vector(3), magnus_accel(3), basebleed_accel(3), &
-        ideal_injection, mass_flow_rate, injection_parameter, acceleration(3), yox, yoy, yoz, yov(3), yaw_repose_adjust(3), &
-        mass_properties(3), spin_rate
+        ideal_injection, mass_flux, injection_parameter, acceleration(3), yox, yoy, yoz, yov(3), yaw_repose_adjust(3), &
+        mass_properties(3), spin_rate, az_angle, temp_gradient, vel_sound, inj
         
+        ! Variables imported from setup 
+        real(wp) :: initial_inertia_moment, initial_center_gravity, final_inertia_moment, final_center_gravity, &
+        initial_mass, final_mass, ref_diameter, boat_diameter
+
+        ! Assigning variables according to geometry properties
+        initial_inertia_moment = firing_data(9)
+        initial_center_gravity = firing_data(10)
+        final_inertia_moment = firing_data(11)
+        final_center_gravity = firing_data(12)
+        initial_mass = firing_data(13)
+        final_mass = firing_data(14)
+        ref_diameter = firing_data(15)
+        boat_diameter = firing_data(16)
+
         ! Assigning variables according to enviromental properties
         p_sea_level = environmental_properties(1)
         temp_sea_level = environmental_properties(2)
         univ_gas_const = environmental_properties(3)
         heat_cap_ratio = environmental_properties(4)
         accel_gravity = environmental_properties(5)
-        earth_ang_vel = environmental_properties(6)
-        earth_radius = environmental_properties(7)
-        rj_latitude = environmental_properties(8)
-        suth_temp_const = environmental_properties(9)
-        suth_visc_const = environmental_properties(10)
-        magnus_factor = environmental_properties(11)
-        drag_factor = environmental_properties(12)
+        temp_gradient = -environmental_properties(6)
+        earth_ang_vel = environmental_properties(7)
+        earth_radius = environmental_properties(8)
+        rj_latitude = environmental_properties(9)
+        az_angle = environmental_properties(10)
+        suth_temp_const = environmental_properties(11)
+        suth_visc_const = environmental_properties(12)
+        magnus_factor = environmental_properties(13)
+        drag_factor = environmental_properties(14)
         
         ! Projectile coordinates wrt the ground:
         x_pos = muzzle_input(1)
@@ -77,66 +91,57 @@ module mpmtm
         spin = muzzle_input(13)   
     
         ! Gravitational acceleration in spherical approximation: 
-        gravity = accel_gravity*(1 - 2.6d-3*cos(-2.0d0*rj_latitude*PI/1.8d2))
+        gravity = accel_gravity*(1 - 0.0026*cos(-2.0d0*rj_latitude*PI/1.8d2))
             
         if (y_pos <= 1.1d04) then
-            temperature = temp_sea_level - temp_gradient*y_pos
-            pressure = p_sea_level*(1.0d0 - temp_gradient*y_pos/temp_sea_level)**(accel_gravity/temp_gradient/univ_gas_const)
+            temperature = temp_sea_level + temp_gradient*y_pos
+            pressure = p_sea_level*(1.0d0 + temp_gradient*y_pos/temp_sea_level)**(-accel_gravity/(temp_gradient*univ_gas_const))
         else
             temperature = 2.1665d02
-            pressure = (2.2620d04)*exp(-accel_gravity/univ_gas_const/temperature*(y_pos-1.1d04))
+            pressure = (2.2620d04)*exp(-accel_gravity/(univ_gas_const*temperature)*(y_pos-1.1d04))
         end if
 
         ! Free air stream density:
-        density = pressure/univ_gas_const/temperature 
+        density = pressure/(univ_gas_const*temperature)
         ! Sutherland's law of Dynamic Viscosity:
         dyn_viscosity = suth_visc_const*temperature**(1.5d0)/(temperature+suth_temp_const)
         ! Mach number
-        mach_number = vel/sqrt(heat_cap_ratio*univ_gas_const*temperature)
+        vel_sound = sqrt(heat_cap_ratio*univ_gas_const*temperature)
+        mach_number = vel_module/vel_sound
         ! Associated Reynolds number with respect to proj. refer. diameter:
-        reynolds_number = density*ref_diameter*vel/dyn_viscosity   
+        reynolds_number = density*ref_diameter*vel_module/dyn_viscosity   
         
-        ! POLYNOMIAL FITTING FOR AERODYNAMIC COEFFICIENTS:
-        ! cubic-spline interpolation:
-        mach_prodas = aero_coefs(1)
-        cx0_vector = aero_coefs(2)
-        cxb_vector = aero_coefs(3)
-        cd2_vector = aero_coefs(4)
-        cla_vector = aero_coefs(5)
-        cmag_f_vector = aero_coefs(6)
-        cma_vector = aero_coefs(7)
-        cspin_vector = aero_coefs(8)
+        ! POLYNOMIAL FITTING FOR AERODYNAMIC COEFFICIENTS
+        ! cubic-spline interpolation
+        mach_prodas = aero_coefs(:,1)
+        cx0_vector = aero_coefs(:,2)
+        cxb_vector = aero_coefs(:,18)
+        cd2_vector = aero_coefs(:,4)
+        cla_vector = aero_coefs(:,6)
+        cmag_f_vector = aero_coefs(:,9)
+        cma_vector = aero_coefs(:,10)
+        cspin_vector = aero_coefs(:,15)
 
-        alloc_accel = fgsl_interp_accel_alloc()   
-        cspline = fgsl_spline_alloc(fgsl_interp_cspline, 30)  
-        
         ! Drag coefficient at 0 angle of attack
-        cd0_status = fgsl_spline_init(cspline, mach_prodas, cx0_vector) 
-        cd0 = fgsl_spline_eval(cspline,mach_number,alloc_accel)
+        cd0 = prodas_interp(mach_prodas,cx0_vector,mach_number,size(mach_prodas))
 
         ! Boat-tail drag coefficient 
-        cdb_status = fgsl_spline_init(cspline, mach_prodas, cxb_vector) 
-        cdb = fgsl_spline_eval(cspline,mach_number,alloc_accel)
-        
+        cdb = prodas_interp(mach_prodas,cxb_vector,mach_number,size(mach_prodas))
+
         ! Drag coefficient with yaw of repose
-        cd2_status = fgsl_spline_init(cspline, mach_prodas, cd2_vector) 
-        cd2 = fgsl_spline_eval(cspline,mach_number,alloc_accel)
-        
+        cd2 = prodas_interp(mach_prodas,cd2_vector,mach_number,size(mach_prodas))
+
         ! Lift coefficient
-        cla_status = fgsl_spline_init(cspline, mach_prodas, cla_vector) 
-        cla = fgsl_spline_eval(cspline,mach_number,alloc_accel)
+        cla = prodas_interp(mach_prodas,cla_vector,mach_number,size(mach_prodas))
         
         ! Magnus coefficient
-        cmag_status = fgsl_spline_init(cspline, mach_prodas, cmag_f_vector) 
-        cmag = fgsl_spline_eval(cspline,mach_number,alloc_accel)
+        cmag_f = prodas_interp(mach_prodas,cmag_f_vector,mach_number,size(mach_prodas))
 
         ! Pitching moment coefficient
-        cma_status = fgsl_spline_init(cspline, mach_prodas, cma_vector) 
-        cma = fgsl_spline_eval(cspline, mach_number,alloc_accel)
+        cma = prodas_interp(mach_prodas,cma_vector,mach_number,size(mach_prodas))
         
         ! Pitching moment coefficient
-        cspin_status = fgsl_spline_init(cspline, mach_prodas, cspin_vector) 
-        cspin = fgsl_spline_eval(cspline, mach_number,alloc_accel)
+        cspin = prodas_interp(mach_prodas,cspin_vector,mach_number,size(mach_prodas))
                    
         ! Coriolis effect         
         coriolis_accel = 2.0d0*earth_ang_vel*(/-vy*cos(-2.0d0*rj_latitude*PI/1.8d2)*sin(az_angle*PI/1.8d2) &
@@ -145,10 +150,11 @@ module mpmtm
         - vy*cos(-2.0d0*rj_latitude*PI/1.8d2)*cos(az_angle*PI/1.8d2)/)    
         
         ! Drag acceleration
-        drag_accel = -(pi*density*(ref_diameter**2.0d0)*(cd0 + cd2*(drag_factor*ae)**2)*vel_module*velocity)/(8.0d0*proj_mass)
+        drag_accel = -PI*density*ref_diameter**2.0d0*vel_module*velocity*(cd0 &
+         + cd2*(drag_factor*yaw_repose_module)**2)/8.0d0/proj_mass
         
         ! Gravitational acceleration using spherical approximation        
-        grav_accel = gravity*(/-x_pos/earth_radius,-1.0d0 + 2.0d0*y_pos/earth_radius,-z_pos/earth_radius/)
+        grav_accel = -gravity*(/x_pos/earth_radius,1.0d0 - 2.0d0*y_pos/earth_radius,z_pos/earth_radius/)
         
         ! Lift acceleration
         lift_accel = (pi*density*(ref_diameter**2.0)*cla*vel_module**2*yaw_repose_vector)/(8.0d0*proj_mass)
@@ -160,23 +166,24 @@ module mpmtm
         magnus_vector = (/mfx,mfy,mfz/)
         magnus_accel = -(pi*density*(ref_diameter**3)*magnus_factor*spin*cmag_f)/(8.0d0*proj_mass)*magnus_vector
             
-        ! Base bleed acceleration
-        ! POLYNOMIAL FITTING FOR HOT MASS FLUX INJECTION:   
-        ! list_cols = ['Time (s)', 'mass_flow_rate/dt (kg/s)', 'Mach', 'Vt (m/s)', 'Tt (K)']
-        ! In that case, propellant data == v2013B1120        
+        ! Base bleed acceleration     
         if (time <= propellant_data(ubound(propellant_data,1),1)) then
-            ideal_injection = 5.0d-3
-            prop_accel = fgsl_interp_accel_alloc()
-            prop_cspline = fgsl_spline_alloc(fgsl_interp_cspline,ubound(propellant_data,1))
-            prop_status = fgsl_spline_init(prop_cspline, propellant_data(:,1), propellant_data(:,2))    
-            mass_flow_rate = fgsl_spline_eval(prop_cspline,time,prop_accel)
-            injection_parameter = 4.0d0*mass_flow_rate/(pi*density*vel_module*boat_diameter) 
+            mass_flux = prodas_interp(propellant_data(:,1), propellant_data(:,2), time, size(propellant_data,1))
         else
-            mass_flow_rate = 0.0d0
-            injection_parameter = 1.0d0
+            mass_flux = 0.0d0
         end if
-                    
-        basebleed_accel = pi*density*(ref_diameter*vel_module)**2*cdb*injection_parameter*(velocity*cos(yaw_repose_module)/vel_module+aev)/(8*proj_mass)
+        
+        ideal_injection = 5.0d-3
+        injection_parameter = 4.0d0*mass_flux/(pi*density*vel_module*boat_diameter**2)
+
+        if (injection_parameter < ideal_injection) then       
+            inj = injection_parameter/ideal_injection 
+        else
+            inj = 1.0d0
+        end if
+
+        basebleed_accel = pi*density*(ref_diameter*vel_module)**2*cdb*inj*&
+        (yaw_repose_vector + velocity/vel_module*cos(yaw_repose_module))/(8.0d0*proj_mass)
                 
         ! acceleration vector
         acceleration = coriolis_accel+drag_accel+grav_accel+lift_accel+magnus_accel+basebleed_accel
@@ -186,18 +193,33 @@ module mpmtm
         yoy = velocity(3)*acceleration(1) - velocity(1)*acceleration(3)
         yoz = velocity(1)*acceleration(2) - velocity(2)*acceleration(1)
         yov = (/yox,yoy,yoz/) 
-        yaw_repose_adjust = -8.0d0*axial_inertia*spin*yov/(pi*density*ref_diameter**3*cma*vel_module**4)
+        yaw_repose_adjust = -8.0d0*axial_inertia*spin*yov/(PI*density*ref_diameter**3*cma*vel_module**4)
         ! mass flow vector:
-        mass_properties = (/-mass_flow_rate,(axial_inertia0-axial_inertia1)*(m-m0)/(m0-m1),(CG0-CG1)*(m-m0)/(m0-m1)/)
+        mass_properties = (/-mass_flux,&
+        (initial_inertia_moment-final_inertia_moment)*(proj_mass-initial_mass)/(initial_mass-final_mass),&
+        (initial_center_gravity-final_center_gravity)*(proj_mass-initial_mass)/(initial_mass-final_mass)/)
         ! spin rate vector:
         spin_rate = pi*density*(ref_diameter**4)*spin*vel_module*cspin/(8.0d0*axial_inertia)
         muzzle_output = (/velocity,acceleration,yaw_repose_adjust,mass_properties,spin_rate/)  
-
-        call fgsl_spline_free(cspline)     
-        call fgsl_interp_accel_free(accel)
-        call fgsl_spline_free(prop_cspline)     
-        call fgsl_interp_accel_free(prop_accel)
         
     end function traj4DOF
+
+    function prodas_interp(x,y,x_interp,n) result(y_interp)
+        implicit none
+        
+        integer(intlength) :: status, n
+        real(wp) :: x(n), y(n), x_interp, y_interp
+        type(fgsl_interp_accel) :: acc
+        type(fgsl_spline) :: cspline
+    
+        acc = fgsl_interp_accel_alloc()
+        cspline = fgsl_spline_alloc(fgsl_interp_cspline, int(n,fgsl_size_t))
+        status = fgsl_spline_init(cspline, x, y)
+        y_interp = fgsl_spline_eval(cspline,x_interp,acc)
+        
+        call fgsl_spline_free(cspline)
+        call fgsl_interp_accel_free(acc)
+        
+    end function prodas_interp
 
 end module mpmtm
