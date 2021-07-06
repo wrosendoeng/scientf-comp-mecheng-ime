@@ -10,9 +10,9 @@ module mpmtm
     function traj4DOF(time,muzzle_input,firing_data,environmental_properties,aero_coefs,propellant_data) result(muzzle_output)
         
         ! Inputs and outputs
-        real(wp), intent(in) :: time, firing_data(16), muzzle_input(13), environmental_properties(14), &
+        real(wp), intent(in) :: time, firing_data(16), muzzle_input(15), environmental_properties(14), &
         aero_coefs(30,19), propellant_data(1402,2)
-        real(wp)             :: muzzle_output(13)
+        real(wp)             :: muzzle_output(15)
 
         ! Declaring variables from environmental properties text file 
         real(wp) :: p_sea_level, temp_sea_level, univ_gas_const, heat_cap_ratio, accel_gravity, &
@@ -200,7 +200,7 @@ module mpmtm
         (initial_center_gravity-final_center_gravity)*(proj_mass-initial_mass)/(initial_mass-final_mass)/)
         ! spin rate vector:
         spin_rate = pi*density*(ref_diameter**4)*spin*vel_module*cspin/(8.0d0*axial_inertia)
-        muzzle_output = (/velocity,acceleration,yaw_repose_adjust,mass_properties,spin_rate/)  
+        muzzle_output = (/velocity,acceleration,yaw_repose_adjust,mass_properties,spin_rate,cd0,cdb/)  
         
     end function traj4DOF
 

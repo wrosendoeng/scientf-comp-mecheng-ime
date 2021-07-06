@@ -193,7 +193,7 @@ contains
     subroutine rk4_mpmtm(x,y,dx)
             
         real(wp) :: x, dx
-        real(wp), dimension(13) :: k1, k2, k3, k4, y
+        real(wp), dimension(15) :: k1, k2, k3, k4, y
 
         write(resultunit,"(*(a15))") 'time','x','y','z','vx','vy','vz',&
         'yox','yoy','yoz','mi','Ix0','CG0','p0'
