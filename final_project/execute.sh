@@ -1,2 +1,2 @@
-./finalproject.exe initial_conditions.txt environmental_conditions.txt prodas.csv V2013_121120-B_27112020.csv results_bb.txt
-./finalproject.exe initial_conditions.txt environmental_conditions.txt prodas.csv inert_projectile.csv results_inert.txt
+./finalproject.exe initial_conditions.txt environmental_conditions.txt prodas.csv V2013_121120-B_27112020.csv inert_projectile.csv inert
+./finalproject.exe initial_conditions.txt environmental_conditions.txt prodas.csv V2013_121120-B_27112020.csv inert_projectile.csv active

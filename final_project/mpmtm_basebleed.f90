@@ -7,12 +7,13 @@ module mpmtm
 
     contains
 
-    function traj4DOF(time,muzzle_input,firing_data,environmental_properties,aero_coefs,propellant_data) result(muzzle_output)
+    function traj4DOF(time,muzzle_input,firing_data,environmental_properties,aero_coefs, &
+        propellant_data) result(muzzle_output)
         
         ! Inputs and outputs
-        real(wp), intent(in) :: time, firing_data(16), muzzle_input(15), environmental_properties(14), &
+        real(wp), intent(in) :: time, firing_data(16), muzzle_input(13), environmental_properties(14), &
         aero_coefs(30,19), propellant_data(1402,2)
-        real(wp)             :: muzzle_output(15)
+        real(wp) :: muzzle_output(15)
 
         ! Declaring variables from environmental properties text file 
         real(wp) :: p_sea_level, temp_sea_level, univ_gas_const, heat_cap_ratio, accel_gravity, &
@@ -29,7 +30,7 @@ module mpmtm
         density, dyn_viscosity, mach_number, reynolds_number, cd0, cdb, cd2, cla, cmag_f, cma, cspin, coriolis_accel(3), &
         drag_accel(3), grav_accel(3), lift_accel(3), mfx, mfy, mfz, magnus_vector(3), magnus_accel(3), basebleed_accel(3), &
         ideal_injection, mass_flux, injection_parameter, acceleration(3), yox, yoy, yoz, yov(3), yaw_repose_adjust(3), &
-        mass_properties(3), spin_rate, az_angle, temp_gradient, vel_sound, inj
+        mass_properties(3), spin_rate, az_angle, temp_gradient, vel_sound, inj, axial_inertia_rate, center_gravity_rate
         
         ! Variables imported from setup 
         real(wp) :: initial_inertia_moment, initial_center_gravity, final_inertia_moment, final_center_gravity, &
@@ -124,24 +125,31 @@ module mpmtm
 
         ! Drag coefficient at 0 angle of attack
         cd0 = prodas_interp(mach_prodas,cx0_vector,mach_number,size(mach_prodas))
+        ! cd0 = prodas_aprox(mach_prodas,cx0_vector,mach_number,size(mach_prodas))
 
         ! Boat-tail drag coefficient 
         cdb = prodas_interp(mach_prodas,cxb_vector,mach_number,size(mach_prodas))
+        ! cdb = prodas_aprox(mach_prodas,cxb_vector,mach_number,size(mach_prodas))
 
         ! Drag coefficient with yaw of repose
         cd2 = prodas_interp(mach_prodas,cd2_vector,mach_number,size(mach_prodas))
+        ! cd2 = prodas_aprox(mach_prodas,cd2_vector,mach_number,size(mach_prodas))
 
         ! Lift coefficient
         cla = prodas_interp(mach_prodas,cla_vector,mach_number,size(mach_prodas))
+        ! cla = prodas_aprox(mach_prodas,cla_vector,mach_number,size(mach_prodas))
         
         ! Magnus coefficient
         cmag_f = prodas_interp(mach_prodas,cmag_f_vector,mach_number,size(mach_prodas))
+        ! cmag_f = prodas_aprox(mach_prodas,cmag_f_vector,mach_number,size(mach_prodas))
 
         ! Pitching moment coefficient
         cma = prodas_interp(mach_prodas,cma_vector,mach_number,size(mach_prodas))
+        ! cma = prodas_aprox(mach_prodas,cma_vector,mach_number,size(mach_prodas))
         
         ! Pitching moment coefficient
         cspin = prodas_interp(mach_prodas,cspin_vector,mach_number,size(mach_prodas))
+        ! cspin = prodas_aprox(mach_prodas,cspin_vector,mach_number,size(mach_prodas))
                    
         ! Coriolis effect         
         coriolis_accel = 2.0d0*earth_ang_vel*(/-vy*cos(-2.0d0*rj_latitude*PI/1.8d2)*sin(az_angle*PI/1.8d2) &
@@ -172,7 +180,10 @@ module mpmtm
         else
             mass_flux = 0.0d0
         end if
-        
+
+        axial_inertia_rate = (initial_inertia_moment-final_inertia_moment)*(proj_mass-initial_mass)/(initial_mass-final_mass)
+        center_gravity_rate = (initial_center_gravity-final_center_gravity)*(proj_mass-initial_mass)/(initial_mass-final_mass)
+    
         ideal_injection = 5.0d-3
         injection_parameter = 4.0d0*mass_flux/(pi*density*vel_module*boat_diameter**2)
 
@@ -195,12 +206,10 @@ module mpmtm
         yov = (/yox,yoy,yoz/) 
         yaw_repose_adjust = -8.0d0*axial_inertia*spin*yov/(PI*density*ref_diameter**3*cma*vel_module**4)
         ! mass flow vector:
-        mass_properties = (/-mass_flux,&
-        (initial_inertia_moment-final_inertia_moment)*(proj_mass-initial_mass)/(initial_mass-final_mass),&
-        (initial_center_gravity-final_center_gravity)*(proj_mass-initial_mass)/(initial_mass-final_mass)/)
+        mass_properties = (/-mass_flux,axial_inertia_rate,center_gravity_rate/)
         ! spin rate vector:
         spin_rate = pi*density*(ref_diameter**4)*spin*vel_module*cspin/(8.0d0*axial_inertia)
-        muzzle_output = (/velocity,acceleration,yaw_repose_adjust,mass_properties,spin_rate,cd0,cdb/)  
+        muzzle_output = (/velocity,acceleration,yaw_repose_adjust,mass_properties,spin_rate,cd0,cdb/)
         
     end function traj4DOF
 
@@ -221,5 +230,103 @@ module mpmtm
         call fgsl_interp_accel_free(acc)
         
     end function prodas_interp
+
+    function prodas_aprox(x,y,x_aprox,n) result(y_aprox)
+        implicit none
+
+        integer(intlength) :: i, j, k, n 
+        real(wp), intent(in) :: x(n), y(n), x_aprox
+        real(wp) :: a(5,5), b(5), g(n,5), vector(5), y_aprox
+
+        do k = 1, n
+            g(k,1) = 1.0d0
+            g(k,2) = x(k)
+            g(k,3) = x(k)**2
+            g(k,4) = x(k)**3
+            g(k,5) = x(k)**4
+        end do
+
+        do k = 1, n
+            do i = 1, 5
+                do j = 1 , 5
+                    a(i,j) = a(i,j) + g(k,i)*g(k,j)
+                end do 
+                b(i) = b(i) + y(k)*g(k,i)
+            end do
+        end do
+
+        call lufactorization(a,b,vector,size(a,1))
+        
+        y_aprox = vector(1) + vector(2)*x_aprox + vector(3)*x_aprox**2 + &
+        vector(4)*x_aprox**3 + vector(5)*x_aprox**4
+
+    end function prodas_aprox
+
+    subroutine lufactorization(a,b,x,n)
+
+        integer(intlength) :: aux, i, j, k, l_pivot, n, p(n)
+        real(wp) :: m, pivot, troca, a(n,n), b(n), c(n), y(n)
+        real(wp), intent(out) :: x(n)
+    
+        !Pivoting
+        do i = 1, n 
+            p(i) = i 
+        end do
+    
+        do k = 1, n-1
+            pivot = a(k,k)
+            l_pivot = k 
+            do i = (k+1),n
+                if (abs(a(i,k)) > abs(pivot)) then 
+                    pivot = a(i,k)
+                    l_pivot = i 
+                end if
+            end do
+            if (pivot == 0.0) exit
+            if (l_pivot /= k) then
+                troca = b(k)
+                b(k) = b(l_pivot)
+                b(l_pivot) = troca
+                do j = 1, n
+                    troca = a(k,j)
+                    a(k,j) = a(l_pivot,j)
+                    a(l_pivot,j) = troca
+                end do
+            end if
+            do i = (k+1),n
+                m = a(i,k)/a(k,k)
+                a(i,k) = 0.0
+                do j = (k+1),n
+                    a(i,j) = a(i,j) - m*a(k,j)
+                end do
+                b(i) = b(i) - m*b(k)
+            end do 
+        end do
+    
+        ! c = Pb
+        do i = 1, n 
+            aux = p(i)
+            c(i) = b(aux)
+        end do
+    
+        ! Ly = Pb
+        y = 0.0_fgsl_double
+        do i = 1, n
+            do j = 1, (n-1)
+                y(i) = y(i) + a(i,j)*y(j)
+            end do 
+            y(i) = c(i) - y(i)
+        end do
+    
+        ! Ux = y
+        x = 0.0_fgsl_double
+        do i = n,1,-1   
+            do j = (i+1),n
+                x(i) = x(i) + a(i,j)*x(j)
+            end do
+            x(i) = (y(i)-x(i))/a(i,i)
+        end do
+
+    end subroutine lufactorization
 
 end module mpmtm

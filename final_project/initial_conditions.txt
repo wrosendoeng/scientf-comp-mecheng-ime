@@ -5,7 +5,7 @@
 # muzzle velocity       # twist
 8.96d2                  2.5d1
 # elevation angle       # azimuthal angle
-4.0d1                   0.0d0
+4.5d1                   0.0d0
 # Ix0                   # CG0
 3.759d-2                4.07632d-1 
 # Ix1                   # CG1
