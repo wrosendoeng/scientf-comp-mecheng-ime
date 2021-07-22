@@ -1,1 +1,2 @@
-./debug_4dof.exe initial_conditions.txt environmental_conditions.txt prodas.csv V2013_121120-B_27112020.csv inert_projectile.csv
+./debug_4dof.exe initial_conditions.txt environmental_conditions.txt prodas.csv V2013_121120-B_27112020.csv inert_projectile.csv inert
+./debug_4dof.exe initial_conditions.txt environmental_conditions.txt prodas.csv V2013_121120-B_27112020.csv inert_projectile.csv active

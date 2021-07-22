@@ -14,10 +14,10 @@ program trajectory_4dof_simulator
     real(wp) :: x_pos, y_pos, z_pos, time_step, muzzle_vel, twist, elev_angle, az_angle, initial_center_gravity, & 
     initial_inertia_moment, initial_mass, final_center_gravity, final_inertia_moment, final_mass, ref_diameter, time, &
     muzzle_active_setup(16), muzzle_inert_setup(16), env_data(14), aero_coefs(30,19), prop_time(1402), mass_flow_rate(1402), &
-    boat_diameter, initial_position(3), initial_velocity(3), initial_yaw_repose(3), initial_muzzle_spin, active_muzzle(15), &
-    inert_muzzle(15), active_propellant_data(1402,2), inert_propellant_data(1402,2),propellant_mass, real_mass, p_sea_level, &
+    boat_diameter, initial_position(3), initial_velocity(3), initial_yaw_repose(3), initial_muzzle_spin, active_muzzle(16), &
+    inert_muzzle(16), active_propellant_data(1402,2), inert_propellant_data(1402,2),propellant_mass, real_mass, p_sea_level, &
     temp_sea_level,univ_gas_const, heat_cap_ratio, accel_gravity, temp_gradient, earth_ang_vel, earth_radius, & 
-    rj_latitude, suth_visc_const, suth_temp_const, magnus_factor, drag_factor, initial_time, y_init(15), cd0, cdb
+    rj_latitude, suth_visc_const, suth_temp_const, magnus_factor, drag_factor, initial_time, y_init(16), cd0, cdb,mach
 
     ! Inputs from command-line arguments 
     call get_command_argument(1,input_launch)       ! Muzzle parameters
@@ -90,16 +90,17 @@ program trajectory_4dof_simulator
     initial_time = 0.0d0
 
     active_muzzle = (/initial_position, initial_velocity, initial_yaw_repose, &
-    real_mass, initial_inertia_moment, initial_center_gravity, initial_muzzle_spin,0.0d0,0.0d0/)
+    real_mass, initial_inertia_moment, initial_center_gravity, initial_muzzle_spin,0.0d0,0.0d0,mach/)
     y_init = traj4DOF(0.0d0,active_muzzle,muzzle_active_setup,env_data,aero_coefs,active_propellant_data)
-    cd0 = y_init(14)
-    cdb = y_init(15)
+    mach = y_init(14)
+    cd0 = y_init(15)
+    cdb = y_init(16)
 
     ! Constructing an array that includes all the necessary data to the MPMTM
     active_muzzle = (/initial_position, initial_velocity, initial_yaw_repose, &
-    real_mass, initial_inertia_moment, initial_center_gravity, initial_muzzle_spin,cd0,cdb/)
+    real_mass, initial_inertia_moment, initial_center_gravity, initial_muzzle_spin,mach,cd0,cdb/)
     inert_muzzle = (/initial_position, initial_velocity, initial_yaw_repose, &
-    final_mass, final_inertia_moment, final_center_gravity, initial_muzzle_spin,cd0,cdb/)  
+    final_mass, final_inertia_moment, final_center_gravity, initial_muzzle_spin,mach,cd0,cdb/)  
 
     select case(trim(type_propellant))
     case("inert")
@@ -221,16 +222,16 @@ program trajectory_4dof_simulator
         integer(intlength), intent(in) :: iunit
         real(wp), intent(in) :: x, dx, muzzle_setup(16), pdata(1402,2)
         real(wp) :: x_new
-        real(wp), dimension(15) :: k1, k2, k3, k4, y, y_new
+        real(wp), dimension(16) :: k1, k2, k3, k4, y, y_new
 
         write(iunit,"(*(a15))") 'time','x','y','z','vx','vy','vz',&
-        'yox','yoy','yoz','mass','Ix0','CG0','p0','Cd0','Cdb'
+        'yox','yoy','yoz','mass','Ix0','CG0','p0','Mach','Cd0','Cdb'
 
         x_new = x
         y_new = y
         i = 1
         do while (i <= 100000)
-            write(iunit,'(*(f15.8))') x_new, y(1:13), y_new(14:15)
+            write(iunit,'(*(f15.8))') x_new, y(1:13), y_new(14:16)
             k1 = dx*traj4DOF(x_new,y,muzzle_setup,env_data,aero_coefs,pdata)
             k2 = dx*traj4DOF(x_new+0.5d0*dx,y+0.5d0*k1,muzzle_setup,env_data,aero_coefs,pdata)
             k3 = dx*traj4DOF(x_new+0.5d0*dx,y+0.5d0*k2,muzzle_setup,env_data,aero_coefs,pdata)
